@@ -302,7 +302,7 @@ WHERE a.status = 'ACTIVE' AND u.is_active = true;
 -- Décommentez et adaptez les lignes ci-dessous :
 
 -- 1. Créer un utilisateur spécifique pour l'app
--- CREATE USER opossum_app WITH PASSWORD 'mot_de_passe_super_securise_123!';
+-- CREATE USER opossum_app WITH PASSWORD '#######################!';
 
 -- 2. Lui donner accès à la base de données
 -- GRANT CONNECT ON DATABASE opossum_db TO opossum_app;
