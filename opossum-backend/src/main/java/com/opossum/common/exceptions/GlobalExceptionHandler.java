@@ -1,1 +1,0 @@
-// Gestionnaire global d'exceptions

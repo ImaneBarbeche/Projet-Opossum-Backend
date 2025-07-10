@@ -1,0 +1,32 @@
+# Configuration OPOSSUM Backend
+spring:
+  application:
+    name: opossum-backend
+  
+  # Configuration base de données
+  datasource:
+    url: jdbc:postgresql://localhost:5432/opossum_db
+    username: ${DB_USERNAME:opossum_user}
+    password: ${DB_PASSWORD:opossum_pass}
+    driver-class-name: org.postgresql.Driver
+  
+  # Configuration JPA
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        '[format_sql]': true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Configuration serveur
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Configuration JWT personnalisée
+jwt:
+  secret: ${JWT_SECRET:opossum-secret-key-very-long-and-secure}
+  expiration: 86400000 # 24 heures

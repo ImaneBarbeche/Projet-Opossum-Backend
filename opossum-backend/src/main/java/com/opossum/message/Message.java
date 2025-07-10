@@ -1,1 +1,0 @@
-// Entité Message JPA
