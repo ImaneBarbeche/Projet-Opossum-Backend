@@ -1,0 +1,304 @@
+# ==============================================
+# CONFIGURATION OPOSSUM BACKEND
+# ==============================================
+
+# Configuration du serveur
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Configuration Spring
+spring:
+  application:
+    name: opossum-backend
+  
+  # Base de données PostgreSQL
+  datasource:
+    url: jdbc:postgresql://localhost:5432/opossum_db
+    username: ${DB_USERNAME:opossum_user}
+    password: ${DB_PASSWORD:opossum_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # Configuration JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    open-in-view: false
+  
+  # Cache Caffeine
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=30m
+  
+  # Configuration Mail (à adapter selon votre fournisseur)
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+  
+  # Configuration JSON
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
+    time-zone: Europe/Paris
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+
+# Configuration Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+# Configuration logging
+logging:
+  level:
+    com.opossum: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/opossum-backend.log
+    max-size: 10MB
+    max-history: 30
+
+# Configuration JWT
+jwt:
+  secret: ${JWT_SECRET:your-very-long-secret-key-for-jwt-tokens-should-be-at-least-256-bits}
+  expiration: 86400000  # 24 heures en millisecondes
+  refresh-expiration: 604800000  # 7 jours en millisecondes
+
+# Configuration application métier
+app:
+  # Géolocalisation
+  geolocation:
+    default-radius: 5000  # 5 km par défaut
+    max-radius: 50000     # 50 km maximum
+    enable-reverse-geocoding: true
+  
+  # Upload de fichiers
+  upload:
+    max-file-size: 10MB
+    max-request-size: 50MB
+    allowed-types: image/jpeg,image/png,image/gif,image/webp
+    storage-path: ${UPLOAD_PATH:./uploads}
+  
+  # Notifications
+  notifications:
+    email:
+      enabled: true
+      from: ${MAIL_FROM:noreply@opossum.fr}
+      templates-path: classpath:templates/email
+    push:
+      enabled: false
+  
+  # Sécurité
+  security:
+    cors:
+      allowed-origins: 
+        - http://localhost:3000
+        - http://localhost:8080
+      allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+      allowed-headers: "*"
+      allow-credentials: true
+      max-age: 3600
+    rate-limiting:
+      enabled: true
+      requests-per-minute: 60
+  
+  # Cache
+  cache:
+    user-cache-duration: 30m
+    listing-cache-duration: 10m
+    geolocation-cache-duration: 1h
+
+# Configuration OpenAPI/Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+  info:
+    title: OPOSSUM API
+    description: API REST pour l'application OPOSSUM - Objets perdus/trouvés
+    version: 1.0.0
+    contact:
+      name: Équipe OPOSSUM
+      email: contact@opossum.fr
+    license:
+      name: MIT
+      url: https://opensource.org/licenses/MIT
+  paths-to-match: /api/**
+
+---
+# ==============================================
+# PROFIL DÉVELOPPEMENT
+# ==============================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  # Base de données H2 en mémoire pour le développement
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    
+  mail:
+    host: localhost
+    port: 1025  # MailHog ou similar pour les tests
+
+logging:
+  level:
+    com.opossum: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate: DEBUG
+
+app:
+  upload:
+    storage-path: ./uploads-dev
+  notifications:
+    email:
+      enabled: false  # Désactiver les emails en dev
+
+---
+# ==============================================
+# PROFIL TEST
+# ==============================================
+spring:
+  config:
+    activate:
+      on-profile: test
+  
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    
+  mail:
+    host: localhost
+    port: 1025
+
+logging:
+  level:
+    com.opossum: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+
+app:
+  notifications:
+    email:
+      enabled: false
+  security:
+    rate-limiting:
+      enabled: false
+
+---
+# ==============================================
+# PROFIL PRODUCTION
+# ==============================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+  cache:
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=1h
+
+logging:
+  level:
+    com.opossum: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  file:
+    name: /var/log/opossum/opossum-backend.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  security:
+    rate-limiting:
+      requests-per-minute: 30  # Plus restrictif en production

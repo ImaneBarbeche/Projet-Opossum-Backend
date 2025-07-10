@@ -1,0 +1,1 @@
+// Entité Annonce JPA
