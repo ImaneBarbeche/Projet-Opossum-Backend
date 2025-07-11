@@ -6,8 +6,8 @@ spring:
   # Configuration base de données
   datasource:
     url: jdbc:postgresql://localhost:5432/opossum_db
-    username: ${DB_USERNAME:opossum_user}
-    password: ${DB_PASSWORD:opossum_pass}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
   
   # Configuration JPA
