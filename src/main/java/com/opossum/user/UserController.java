@@ -17,13 +17,59 @@ import com.opossum.user.dto.UpdateUserRequest;
 import com.opossum.user.dto.UserDto;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("api/v1/users")
 public class UserController {
 
     private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> getUserByConnected(@PathVariable UUID id) {
+        return userService.getUserByConnected(id)
+                .map(userService::mapToDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/edit-password")
+    public ResponseEntity<UserDto> editPassword(@PathVariable UUID id, @RequestBody String newPassword) {
+        return userService.editPassword(id, newPassword)
+                .map(userService::mapToDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/edit")
+    public ResponseEntity<UserDto> updateUser(@PathVariable UUID id, @RequestBody UpdateUserRequest dto) {
+        return userService.updateUser(id, dto)
+                .map(userService::mapToDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("auth/verify-email{token}")
+    public ResponseEntity<Void> verifyEmail(@PathVariable String token) {
+        if (userService.verifyEmailToken(token)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/annonces/{id}")
+    public ResponseEntity<UserDto> getUserById(@PathVariable UUID id) {
+        return userService.getUserById(id)
+                .map(userService::mapToDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
@@ -35,33 +81,4 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable UUID id) {
-        return userService.getUserById(id)
-                .map(userService::mapToDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<UserDto> updateUser(@PathVariable UUID id, @RequestBody UpdateUserRequest dto) {
-        return userService.updateUser(id, dto)
-                .map(userService::mapToDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/verify-email/{token}")
-    public ResponseEntity<Void> verifyEmail(@PathVariable String token) {
-        if (userService.verifyEmailToken(token)) {
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
 }

@@ -29,6 +29,17 @@ public class UserService {
         return userRepository.findById(id);
     }
 
+    public Optional<User> getUserByConnected(UUID id) {
+        return userRepository.findById(id);
+    }
+
+    public Optional<User> editPassword(UUID id, String newPassword) {
+        return userRepository.findById(id).map(user -> {
+            user.setPasswordHash(newPassword);
+            return userRepository.save(user);
+        });
+    }
+
     public void deleteUser(UUID id) {
         userRepository.deleteById(id);
     }
@@ -83,5 +94,7 @@ public class UserService {
                 user.getUpdatedAt(),
                 user.getLastLoginAt()
         );
+
     }
+
 }
