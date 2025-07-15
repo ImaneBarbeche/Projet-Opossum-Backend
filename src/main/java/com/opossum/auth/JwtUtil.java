@@ -1,51 +1,92 @@
 package com.opossum.auth;
 
 import com.opossum.user.User;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
+/**
+ * Utilitaire pour générer et valider des JWT (JSON Web Tokens).
+ */
 @Component
 public class JwtUtil {
 
-    private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // Clé secrète utilisée pour signer le token (256 bits requis pour HS256)
+    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
-    public String generateAccessToken(User user) {
+    // Durée de validité d’un accessToken : 30 minutes (en ms)
+    private static final long EXPIRATION_TIME_MS = 30 * 60 * 1000;
+
+    /**
+     * Génère un token JWT pour un utilisateur
+     */
+    public String generateToken(User user) {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + EXPIRATION_TIME_MS);
+
         return Jwts.builder()
-                .setSubject(user.getEmail())
-                .claim("role", user.getRole().name())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1800_000)) // 30 min
-                .signWith(secretKey)
+                .setSubject(user.getId().toString()) // UUID en string
+                .claim("email", user.getEmail())
+                .claim("role", user.getRole())
+                .setIssuedAt(now)
+                .setExpiration(expiration)
+                .signWith(key)
                 .compact();
     }
 
-    public String generateRefreshToken(User user) {
-        return Jwts.builder()
-                .setSubject(user.getEmail())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 604_800_000)) // 7 jours
-                .signWith(secretKey)
-                .compact();
+    /**
+     * Extrait l'UUID utilisateur depuis le token JWT
+     */
+    public UUID extractUserId(String token) {
+        String subject = parseToken(token).getSubject();
+        return UUID.fromString(subject);
     }
 
-    public String getEmailFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(secretKey).build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    public boolean validateToken(String token) {
+    /**
+     * Vérifie si le token est valide (non expiré, bien signé, etc.)
+     */
+    public boolean isTokenValid(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+            parseToken(token); // va lancer une exception si invalide
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * Méthode interne qui parse le token en renvoyant les "claims"
+     */
+    private Claims parseToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    /**
+     * Retourne la date d’expiration du token (utile pour afficher sur front)
+     */
+    public Date getExpirationDate(String token) {
+        return parseToken(token).getExpiration();
+    }
+
+    /**
+     * Retourne le rôle utilisateur stocké dans le token
+     */
+    public String getRole(String token) {
+        return parseToken(token).get("role", String.class);
+    }
+
+    /**
+     * Retourne l’email stocké dans le token
+     */
+    public String getEmail(String token) {
+        return parseToken(token).get("email", String.class);
     }
 }
