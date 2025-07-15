@@ -1,8 +1,15 @@
 package com.opossum.user.dto;
 
-/**
- * DTO pour les requêtes de mise à jour utilisateur
- */
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class UpdateUserRequest {
-    // DTO mise à jour User à implémenter
+
+    private String firstname;
+    private String lastname;
+    private String email;
+    private String phone;
+    private String avatarUrl;
 }

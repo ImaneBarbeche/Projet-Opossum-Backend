@@ -1,8 +1,11 @@
 package com.opossum.user;
 
-/**
- * Repository pour l'entité User
- */
-public interface UserRepository {
-    // Repository User à implémenter
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface UserRepository extends JpaRepository<User, UUID> {
+
+    Optional<User> findByEmailVerificationToken(String token);
 }
