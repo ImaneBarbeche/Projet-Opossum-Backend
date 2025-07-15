@@ -1,15 +1,16 @@
 package com.opossum.user;
 
-import com.opossum.user.dto.UpdateUserRequest;
-import com.opossum.user.dto.UserCreateDto;
-import com.opossum.user.dto.UserDto;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.opossum.user.dto.UpdateUserRequest;
+import com.opossum.user.dto.UserDto;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class UserService {
@@ -18,20 +19,6 @@ public class UserService {
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-    }
-
-    public User createUser(UserCreateDto dto) {
-        User user = new User();
-        user.setFirstname(dto.getFirstname());
-        user.setLastname(dto.getLastname());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
-        user.setPasswordHash(dto.getPasswordHash());
-        user.setRole("USER");
-        user.setCreatedAt(Instant.now());
-        user.setActive(true);
-        user.setEmailVerified(false);
-        return userRepository.save(user);
     }
 
     public List<User> getAllUsers() {

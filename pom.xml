@@ -98,13 +98,6 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         
-        <!-- Lombok - Getters/Setters automatiques -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
-            <scope>provided</scope>
-        </dependency>
         
         <!-- Configuration Processor - Autocomplétion application.yml -->
         <dependency>

@@ -3,7 +3,6 @@ package com.opossum.user.dto;
 import java.time.Instant;
 import java.util.UUID;
 
-
 public class UserDto {
 
     private UUID id;
@@ -19,8 +18,7 @@ public class UserDto {
     private Instant updatedAt;
     private Instant lastLoginAt;
 
-
- // Constructeur
+    // Constructeur
     public UserDto(UUID id, String firstname, String lastname, String email, String phone, String avatarUrl, String role, boolean isActive, boolean isEmailVerified, Instant createdAt, Instant updatedAt, Instant lastLoginAt) {
         this.id = id;
         this.firstname = firstname;
@@ -36,7 +34,7 @@ public class UserDto {
         this.lastLoginAt = lastLoginAt;
     }
 
-     // Getters
+    // Getters
     public UUID getId() {
         return id;
     }
@@ -73,16 +71,16 @@ public class UserDto {
         return isEmailVerified;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
     public Instant getUpdatedAt() {
         return updatedAt;
     }
 
     public Instant getLastLoginAt() {
         return lastLoginAt;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
     // Setters

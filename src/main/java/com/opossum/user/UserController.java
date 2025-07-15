@@ -1,14 +1,20 @@
 package com.opossum.user;
 
-import com.opossum.user.dto.UpdateUserRequest;
-import com.opossum.user.dto.UserCreateDto;
-import com.opossum.user.dto.UserDto;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.opossum.user.dto.UpdateUserRequest;
+import com.opossum.user.dto.UserDto;
 
 @RestController
 @RequestMapping("/users")
@@ -18,12 +24,6 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
-    }
-
-    @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody UserCreateDto dto) {
-        var user = userService.createUser(dto);
-        return ResponseEntity.ok(userService.mapToDto(user));
     }
 
     @GetMapping
