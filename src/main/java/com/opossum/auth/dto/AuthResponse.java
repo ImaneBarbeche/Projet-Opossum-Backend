@@ -1,8 +1,14 @@
 package com.opossum.auth.dto;
 
-/**
- * DTO pour les réponses d'authentification
- */
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
 public class AuthResponse {
-    // Champs de réponse auth à implémenter
+    private String accessToken;
+    private String refreshToken;
+    private long expiresIn; // en secondes
 }

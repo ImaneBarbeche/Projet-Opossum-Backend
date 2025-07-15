@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <!-- ========================================= -->
     <!-- Configuration du projet OPOSSUM Backend  -->
     <!-- ========================================= -->
-    
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.2.1</version>
-        <relativePath/>
+        <relativePath />
     </parent>
-    
+
     <groupId>com.opossum</groupId>
     <artifactId>opossum-backend</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>OPOSSUM Backend</name>
     <description>API REST pour l'application OPOSSUM - Objets perdus/trouvés</description>
-    
+
     <properties>
         <java.version>17</java.version>
         <jwt.version>0.12.3</jwt.version>
@@ -27,24 +28,24 @@
         <modelmapper.version>3.2.0</modelmapper.version>
         <commons-lang.version>3.14.0</commons-lang.version>
     </properties>
-    
+
     <dependencies>
         <!-- ========================================= -->
         <!-- 🔐 SÉCURITÉ & WEB                        -->
         <!-- ========================================= -->
-        
+
         <!-- Spring Web - Contrôleurs REST -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
+
         <!-- Spring Security - Authentification JWT -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        
+
         <!-- JWT Library pour les tokens -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -63,83 +64,85 @@
             <version>${jwt.version}</version>
             <scope>runtime</scope>
         </dependency>
-        
+
         <!-- ========================================= -->
         <!-- 🧩 PERSISTANCE DES DONNÉES               -->
         <!-- ========================================= -->
-        
+
         <!-- Spring Data JPA - Entités et repositories -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        
+
         <!-- PostgreSQL Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        
+
         <!-- ========================================= -->
         <!-- 📦 VALIDATION & UTILITAIRES              -->
         <!-- ========================================= -->
-        
+
         <!-- Validation - @NotNull, @Size, etc. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        
+
         <!-- Lombok - Getters/Setters automatiques -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <version>1.18.26</version>
+            <scope>provided</scope>
         </dependency>
-        
+
+
         <!-- Configuration Processor - Autocomplétion application.yml -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
-        
+
         <!-- ========================================= -->
         <!-- 📊 MONITORING & MÉTRIQUES                -->
         <!-- ========================================= -->
-        
+
         <!-- Actuator - Monitoring et métriques -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        
+
         <!-- ========================================= -->
         <!-- 🔄 MAPPING & CONVERSION                  -->
         <!-- ========================================= -->
-        
+
         <!-- ModelMapper - Conversion entité-DTO -->
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>${modelmapper.version}</version>
         </dependency>
-        
+
         <!-- ========================================= -->
         <!-- 📧 NOTIFICATIONS                         -->
         <!-- ========================================= -->
-        
+
         <!-- Spring Boot Mail - Envoi d'emails -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
-        
+
         <!-- ========================================= -->
         <!-- 🚀 CACHE & PERFORMANCE                   -->
         <!-- ========================================= -->
-        
+
         <!-- Caffeine - Cache haute performance -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -149,11 +152,11 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
-        
+
         <!-- ========================================= -->
         <!-- 🔧 UTILITAIRES                          -->
         <!-- ========================================= -->
-        
+
         <!-- Apache Commons Lang - Utilitaires -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -161,7 +164,7 @@
             <version>${commons-lang.version}</version>
         </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <!-- Plugin Spring Boot -->
@@ -177,7 +180,7 @@
                     </excludes>
                 </configuration>
             </plugin>
-            
+
             <!-- Plugin Maven Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -188,7 +191,7 @@
                     <target>17</target>
                 </configuration>
             </plugin>
-            
+
             <!-- Plugin Surefire pour les tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -197,5 +200,5 @@
             </plugin>
         </plugins>
     </build>
-    
+
 </project>
