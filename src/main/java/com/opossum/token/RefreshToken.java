@@ -24,17 +24,16 @@ public class RefreshToken {
     @Column(nullable = false, unique = true, length = 255)
     private String token;
 
-    @Column(name = "expires_at", nullable = false)
+    @Column(name = "expiresAt", nullable = false)
     private Instant expiresAt;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "createdAt", nullable = false)
     private Instant createdAt = Instant.now();
 
-    @Column(name = "is_revoked", nullable = false)
+    @Column(name = "isRevoked", nullable = false)
     private boolean isRevoked = false;
 
     // === Getters & Setters ===
-
     public UUID getId() {
         return id;
     }

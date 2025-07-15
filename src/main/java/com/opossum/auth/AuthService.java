@@ -4,7 +4,6 @@ import com.opossum.auth.dto.AuthResponse;
 import com.opossum.auth.dto.LoginRequest;
 import com.opossum.auth.dto.RegisterRequest;
 import com.opossum.common.exceptions.UnauthorizedException;
-import com.opossum.auth.JwtUtil;
 import com.opossum.token.RefreshTokenService;
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
@@ -43,6 +42,14 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
+    }
+
+    public AuthService(AuthenticationManager authenticationManager, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService, UserRepository userRepository) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
+        this.userRepository = userRepository;
     }
 
     /**

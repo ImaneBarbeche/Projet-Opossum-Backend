@@ -9,12 +9,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
- * Service métier pour la gestion des refresh tokens :
- * - création
- * - vérification
+ * Service métier pour la gestion des refresh tokens : - création - vérification
  * - révocation
  */
 @Service

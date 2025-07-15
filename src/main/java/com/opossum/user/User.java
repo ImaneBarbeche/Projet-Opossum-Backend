@@ -14,7 +14,7 @@ import java.util.UUID;
  * Entité représentant un utilisateur de l'application OPOSSUM.
  */
 @Entity
-@Table(name = "users")
+@Table(name = "\"user\"") // table user en camelCase nécessite les guillemets
 public class User implements UserDetails {
 
     @Id
@@ -27,25 +27,25 @@ public class User implements UserDetails {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(name = "firstName", nullable = false, length = 100)
     private String firstName;
 
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(name = "lastName", nullable = false, length = 100)
     private String lastName;
 
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "avatar_url", length = 500)
-    private String avatarUrl;
+    @Column(name = "avatar", length = 500)
+    private String avatar;
 
     @Column(nullable = false)
-    private String role; // "USER" ou "ADMIN"
+    private String role;
 
-    @Column(name = "is_active")
+    @Column(name = "isActive")
     private boolean isActive = true;
 
-    @Column(name = "is_email_verified")
+    @Column(name = "isEmailVerified")
     private boolean isEmailVerified = false;
 
     @Column(name = "email_verification_token")
@@ -57,16 +57,16 @@ public class User implements UserDetails {
     @Column(name = "password_reset_expires_at")
     private Instant passwordResetExpiresAt;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "createdAt", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-    @Column(name = "updated_at")
+    @Column(name = "updatedAt")
     private Instant updatedAt = Instant.now();
 
-    @Column(name = "last_login_at")
+    @Column(name = "lastLoginAt")
     private Instant lastLoginAt;
 
-    // === Getters et Setters ===
+    // === Getters & Setters ===
 
     public UUID getId() {
         return id;
@@ -116,12 +116,12 @@ public class User implements UserDetails {
         this.phone = phone;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public String getAvatar() {
+        return avatar;
     }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 
     public String getRole() {
@@ -215,21 +215,21 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // on ne gère pas l’expiration de compte
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return isActive; // un utilisateur inactif est "bloqué"
+        return isActive;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // pas de logique d’expiration de mot de passe
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return isActive; // doit être actif pour être "enabled"
+        return isActive;
     }
 }

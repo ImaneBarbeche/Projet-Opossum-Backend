@@ -14,7 +14,7 @@ import java.util.UUID;
  * Contrôleur REST pour gérer les opérations sur le profil utilisateur connecté.
  */
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1/user")
 public class UserController {
 
     private final UserRepository userRepository;
