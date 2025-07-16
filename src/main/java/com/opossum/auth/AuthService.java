@@ -8,13 +8,15 @@ import com.opossum.token.RefreshTokenService;
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
 import jakarta.transaction.Transactional;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -30,13 +32,13 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
 
     /**
-     * Constructeur manuel (pas de Lombok ici)
+     * Constructeur sans Lombok
      */
     public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager,
-                       JwtUtil jwtUtil,
-                       RefreshTokenService refreshTokenService) {
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil,
+            RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -48,19 +50,21 @@ public class AuthService {
      * Authentifie un utilisateur avec email + mot de passe
      */
     public AuthResponse login(LoginRequest request) {
-        // Création d’un token d’authentification
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                request.getEmail(),
-                request.getPassword()
-        );
+        Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
 
-        try {
-            authentication = authenticationManager.authenticate(authentication);
-        } catch (Exception ex) {
-            throw new UnauthorizedException();
+        if (optionalUser.isEmpty()) {
+            throw new UnauthorizedException("Identifiants incorrects");
         }
 
-        User user = (User) authentication.getPrincipal();
+        User user = optionalUser.get();
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Identifiants incorrects");
+
+        }
+
+        System.out.println("Connexion réussie pour : " + user.getEmail());
+
         return buildAuthResponse(user);
     }
 
@@ -69,8 +73,14 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+
+        System.out.println(">> check email en BDD : " + request.getEmail());
+        System.out.println(">> user trouvé : " + userRepository.findByEmail(request.getEmail()));
+        System.out.println(">> existsByEmail : " + userRepository.existsByEmail(request.getEmail()));
+
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email déjà utilisé");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email déjà utilisé");
+
         }
 
         User user = new User();
@@ -109,4 +119,10 @@ public class AuthService {
                 Instant.now()
         );
     }
+
+    public AuthResponse refreshToken(String refreshToken) {
+        User user = refreshTokenService.verifyRefreshToken(refreshToken);
+        return buildAuthResponse(user);
+    }
+
 }

@@ -28,10 +28,24 @@ public class UserController {
     /**
      * 🔎 Voir les infos de son propre profil
      */
-    @GetMapping("/me")
-    public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(user);
+@GetMapping("/me")
+public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal User user) {
+    if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non connecté.");
     }
+
+    return ResponseEntity.ok(
+            new UserProfileResponse(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getPhone(),
+                    user.getRole()
+            )
+    );
+}
+
 
     /**
      * 📝 Mettre à jour son profil (prénom, nom, téléphone)

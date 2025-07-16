@@ -21,7 +21,7 @@ public class User implements UserDetails {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(name = "passwordHash", nullable = false)
@@ -67,7 +67,6 @@ public class User implements UserDetails {
     private Instant lastLoginAt;
 
     // === Getters & Setters ===
-
     public UUID getId() {
         return id;
     }
@@ -197,7 +196,6 @@ public class User implements UserDetails {
     }
 
     // === Implémentation de UserDetails (Spring Security) ===
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role));

@@ -1,5 +1,6 @@
 package com.opossum.token;
 
+import com.opossum.common.exceptions.UnauthorizedException;
 import com.opossum.user.User;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -10,16 +11,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Optional;
 
-/**
- * Service métier pour la gestion des refresh tokens : - création - vérification
- * - révocation
- */
 @Service
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
-    // Expiration par défaut : 7 jours
     private static final long EXPIRATION_DAYS = 7;
 
     public RefreshTokenService(RefreshTokenRepository refreshTokenRepository) {
@@ -29,9 +25,10 @@ public class RefreshTokenService {
     /**
      * Crée et enregistre un nouveau refresh token pour un utilisateur.
      */
+    @Transactional
     public String createRefreshToken(User user) {
         // Supprime l’ancien token si existant
-        refreshTokenRepository.deleteByUserId(user.getId());
+        refreshTokenRepository.deleteByUser_Id(user.getId());
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
@@ -77,5 +74,19 @@ public class RefreshTokenService {
         byte[] randomBytes = new byte[64];
         new SecureRandom().nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+    }
+
+    /**
+     * Vérifie qu’un refresh token est authentique et retourne l'utilisateur s'il est valide.
+     */
+    public User verifyRefreshToken(String token) {
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenWithUser(token)
+                .orElseThrow(() -> new UnauthorizedException("Token invalide"));
+
+        if (refreshToken.isRevoked() || refreshToken.getExpiresAt().isBefore(Instant.now())) {
+            throw new UnauthorizedException("Token expiré ou révoqué");
+        }
+
+        return refreshToken.getUser();
     }
 }
