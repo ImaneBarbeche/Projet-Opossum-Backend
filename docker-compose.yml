@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: railway
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: your-railway-password
+      POSTGRES_PASSWORD: czeCDrCFNBOQwWQjgcymtCJhPjuMsTaF
     ports:
       - "5432:5432"
     volumes:

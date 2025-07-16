@@ -32,6 +32,19 @@ Vous devez voir un conteneur `postgres` en fonctionnement.
 
 ### 3bis. Tester la connexion à la base de données
 
+
+#### Avec pgAdmin4
+1. Ouvrez pgAdmin4.
+2. Faites un clic droit sur "Servers" > "Create" > "Server...".
+3. Onglet "General" : donnez un nom (ex : OpossumDB).
+4. Onglet "Connection" :
+   - Host name/address : `localhost`
+   - Port : `5432`
+   - Maintenance database : `railway`
+   - Username : `postgres`
+   - Password : `your-railway-password`
+5. Cliquez sur "Save". Si la connexion s'établit sans erreur, la base fonctionne !
+
 #### Avec DBeaver (ou autre client graphique)
 1. Ouvrez DBeaver et créez une nouvelle connexion PostgreSQL.
 2. Renseignez :
