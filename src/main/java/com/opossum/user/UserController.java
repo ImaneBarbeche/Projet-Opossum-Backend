@@ -64,7 +64,7 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/annonces/{id}")
+    @GetMapping("/listings/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable UUID id) {
         return userService.getUserById(id)
                 .map(userService::mapToDto)

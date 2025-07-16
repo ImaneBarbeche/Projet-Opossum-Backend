@@ -1,8 +1,8 @@
-package com.opossum.annonce.dto;
+package com.opossum.listings.dto;
 
 /**
  * DTO pour les requêtes de création d'annonce
  */
-public class CreateAnnonceRequest {
+public class CreatelistingsRequest {
     // DTO création Annonce à implémenter
 }
