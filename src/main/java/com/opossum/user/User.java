@@ -24,7 +24,7 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "passwordHash", nullable = false)
     private String passwordHash;
 
     @Column(name = "firstName", nullable = false, length = 100)
@@ -48,13 +48,13 @@ public class User implements UserDetails {
     @Column(name = "isEmailVerified")
     private boolean isEmailVerified = false;
 
-    @Column(name = "email_verification_token")
+    @Column(name = "emailVerificationToken")
     private String emailVerificationToken;
 
-    @Column(name = "password_reset_token")
+    @Column(name = "passwordResetToken")
     private String passwordResetToken;
 
-    @Column(name = "password_reset_expires_at")
+    @Column(name = "passwordResetExpiresAt")
     private Instant passwordResetExpiresAt;
 
     @Column(name = "createdAt", nullable = false, updatable = false)
