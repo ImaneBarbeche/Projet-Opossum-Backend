@@ -44,22 +44,6 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
     }
 
-    public AuthService(AuthenticationManager authenticationManager, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService, UserRepository userRepository) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-        this.passwordEncoder = passwordEncoder;
-        this.refreshTokenService = refreshTokenService;
-        this.userRepository = userRepository;
-    }
-
-    // Constructeur vide pour Spring (à utiliser uniquement si nécessaire)
-    public AuthService() {
-        this.userRepository = null;
-        this.passwordEncoder = null;
-        this.authenticationManager = null;
-        this.jwtUtil = null;
-        this.refreshTokenService = null;
-    }
     /**
      * Authentifie un utilisateur avec email + mot de passe
      */
