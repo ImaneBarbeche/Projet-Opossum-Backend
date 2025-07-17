@@ -1,8 +1,189 @@
 package com.opossum.auth;
 
+import com.opossum.auth.dto.AuthResponse;
+import com.opossum.auth.dto.LoginRequest;
+import com.opossum.auth.dto.RegisterRequest;
+import com.opossum.common.exceptions.UnauthorizedException;
+import com.opossum.token.RefreshTokenService;
+import com.opossum.user.User;
+import com.opossum.user.UserRepository;
+import jakarta.transaction.Transactional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
 /**
- * Service métier pour l'authentification
+ * Service métier responsable de la logique d'authentification.
  */
+@Service
 public class AuthService {
-    // Service d'authentification à implémenter
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
+
+    /**
+     * Constructeur sans Lombok
+     */
+    public AuthService(UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil,
+            RefreshTokenService refreshTokenService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        this.refreshTokenService = refreshTokenService;
+    }
+
+    /**
+     * Authentifie un utilisateur avec email + mot de passe
+     */
+    public AuthResponse login(LoginRequest request) {
+        Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
+
+        if (optionalUser.isEmpty()) {
+            throw new UnauthorizedException("Identifiants incorrects");
+        }
+
+        User user = optionalUser.get();
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Identifiants incorrects");
+
+        }
+
+        System.out.println("Connexion réussie pour : " + user.getEmail());
+
+        return buildAuthResponse(user);
+    }
+
+    /**
+     * Enregistre un nouvel utilisateur
+     */
+    @Transactional
+    public AuthResponse register(RegisterRequest request) {
+
+        System.out.println(">> check email en BDD : " + request.getEmail());
+        System.out.println(">> user trouvé : " + userRepository.findByEmail(request.getEmail()));
+        System.out.println(">> existsByEmail : " + userRepository.existsByEmail(request.getEmail()));
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email déjà utilisé");
+
+        }
+
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPhone(request.getPhone());
+        user.setRole("USER");
+        user.setActive(true);
+        user.setEmailVerified(false);
+        user.setCreatedAt(Instant.now());
+
+        userRepository.save(user);
+
+        return buildAuthResponse(user);
+    }
+
+    /**
+     * Construit la réponse AuthResponse avec tokens + infos user
+     */
+    private AuthResponse buildAuthResponse(User user) {
+        String accessToken = jwtUtil.generateToken(user);
+        String refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return new AuthResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRole(),
+                accessToken,
+                refreshToken,
+                1800, // expiresIn: 30 minutes
+                Instant.now()
+        );
+    }
+
+    public AuthResponse refreshToken(String refreshToken) {
+        User user = refreshTokenService.verifyRefreshToken(refreshToken);
+        return buildAuthResponse(user);
+    }
+
+    public void forgotPassword(String email) {
+    // 1. Trouver l’utilisateur
+    Optional<User> optionalUser = userRepository.findByEmail(email);
+
+    if (optionalUser.isEmpty()) {
+        // Pour ne pas divulguer si un compte existe ou pas : on ne dit rien
+        return;
+    }
+
+    User user = optionalUser.get();
+
+    // 2. Générer le token de reset
+    String resetToken = UUID.randomUUID().toString();
+    Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30)); // valide 30 min
+
+    // 3. Mettre à jour l’utilisateur
+    user.setPasswordResetToken(resetToken);
+    user.setPasswordResetExpiresAt(expiresAt);
+
+    userRepository.save(user);
+
+    // 4. Afficher un faux lien de réinitialisation (à remplacer par envoi email plus tard)
+    System.out.println("[🔐 MOT DE PASSE OUBLIÉ]");
+    System.out.println("→ Lien de réinitialisation : https://opossum.app/reset-password?token=" + resetToken);
+    System.out.println("→ Ce lien est valable jusqu’à : " + expiresAt);
+}
+
+public void resetPassword(String token, String newPassword) {
+    // 1. Vérifier que le token correspond à un utilisateur
+    Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
+
+    if (optionalUser.isEmpty()) {
+        throw new IllegalArgumentException("Token invalide.");
+    }
+
+    User user = optionalUser.get();
+
+    // 2. Vérifier la date d’expiration
+    Instant now = Instant.now();
+    Instant expiresAt = user.getPasswordResetExpiresAt();
+
+    if (expiresAt == null || expiresAt.isBefore(now)) {
+        throw new IllegalArgumentException("Le lien de réinitialisation a expiré.");
+    }
+
+    // 3. Hacher le nouveau mot de passe
+    String hashedPassword = passwordEncoder.encode(newPassword);
+    user.setPasswordHash(hashedPassword);
+
+    // 4. Supprimer les infos de reset
+    user.setPasswordResetToken(null);
+    user.setPasswordResetExpiresAt(null);
+
+    // 5. Sauvegarder
+    userRepository.save(user);
+
+    System.out.println("[✅ MOT DE PASSE MIS À JOUR POUR : " + user.getEmail() + "]");
+}
+
+
+
 }
