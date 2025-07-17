@@ -1,11 +1,11 @@
-package com.opossum.user;
+package com.opossum.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO utilisé pour changer le mot de passe d'un utilisateur.
- * Contient uniquement le champ `newPassword`, minimum 8 caractères.
+ * DTO utilisé pour changer le mot de passe d'un utilisateur. Contient
+ * uniquement le champ `newPassword`, minimum 8 caractères.
  */
 public class UpdatePasswordRequest {
 
@@ -14,7 +14,8 @@ public class UpdatePasswordRequest {
     private String newPassword;
 
     // Constructeur vide (requis par Spring)
-    public UpdatePasswordRequest() {}
+    public UpdatePasswordRequest() {
+    }
 
     public UpdatePasswordRequest(String newPassword) {
         this.newPassword = newPassword;
