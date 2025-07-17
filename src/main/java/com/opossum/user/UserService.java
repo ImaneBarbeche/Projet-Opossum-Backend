@@ -35,12 +35,13 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    Transactional
-    ic Optional<User> editPassword(UUID id, String newPassword) {
-         user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
-        .setPasswordHash(passwordEncoder.encode(newPassword));
-        Repository.save(user);
-        rn Optional.ofNullable(user);
+    @Transactional
+    public Optional<User> editPassword(UUID id, String newPassword) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return Optional.of(user);
+    }
     
 
     @Transactional
@@ -51,23 +52,10 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    /**
-     ************ ✨ Windsurf Command ⭐  ************
-     */ *
-     * Mettre à jour son profil (prénom, nom, téléphone)
-     *
-     * Si l'email est mis à jour, la vérification de l'email est réinitialisée.
-     *
-     * @param id Identifiant de l'utilisateur
-     * @param dto Informations de profil à mettre à jour
-     * @return L'utilisateur mis à jour
-     */
-     *
-     * ***** b01a42b5-e1f0-4999-b6d2-0de03a848ee4  ******
-     */
+
     @Transactional
-     *
-     User user = userRepository.findById(id)
+    public User updateProfile(UUID id, UpdateProfileRequest dto) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
         if (dto.getFirstName() != null && !dto.getFirstName().isBlank()) {
@@ -136,7 +124,10 @@ public class UserService {
                 user.isActive(),
                 user.isEmailVerified(),
                 user.getCreatedAt(),
-                user.getUpdatedAt(),
-                user.getLastLogi
+                            user.getUpdatedAt(),
+                            user.getLastLoginAt()
+                    );
+        }
+    }
                 
                 

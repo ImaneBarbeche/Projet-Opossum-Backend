@@ -32,4 +32,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     default boolean existsByEmail(String email) {
         return countByEmail(email) > 0;
     }
+
+    Optional<User> findByPasswordResetToken(String token);
 }
