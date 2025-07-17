@@ -126,11 +126,13 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers() {
-        var users = userService.getAllUsers()
+        List<User> users = userService.getAllUsers()
                 .stream()
+                .collect(Collectors.toList());
+        List<UserDto> userDtos = users.stream()
                 .map(userService::mapToDto)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(userDtos);
     }
 
 }
