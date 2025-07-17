@@ -10,7 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.opossum.auth.dto.ForgotPasswordRequest;
+import com.opossum.auth.dto.ResetPasswordRequest;
 /**
  * Contrôleur REST pour gérer l'authentification : - Inscription (register) -
  * Connexion (login)
@@ -63,5 +64,18 @@ public ResponseEntity<AuthResponse> refreshToken(HttpServletRequest request) {
     AuthResponse response = authService.refreshToken(refreshToken);
     return ResponseEntity.ok(response);
 }
+
+@PostMapping("/forgot-password")
+public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+    authService.forgotPassword(request.getEmail());
+    return ResponseEntity.ok().build();
+}
+
+@PostMapping("/reset-password")
+public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+    authService.resetPassword(request.getToken(), request.getNewPassword());
+    return ResponseEntity.ok().build();
+}
+
 
 }

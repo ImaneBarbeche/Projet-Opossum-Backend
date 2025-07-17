@@ -125,4 +125,65 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    public void forgotPassword(String email) {
+    // 1. Trouver l’utilisateur
+    Optional<User> optionalUser = userRepository.findByEmail(email);
+
+    if (optionalUser.isEmpty()) {
+        // Pour ne pas divulguer si un compte existe ou pas : on ne dit rien
+        return;
+    }
+
+    User user = optionalUser.get();
+
+    // 2. Générer le token de reset
+    String resetToken = UUID.randomUUID().toString();
+    Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30)); // valide 30 min
+
+    // 3. Mettre à jour l’utilisateur
+    user.setPasswordResetToken(resetToken);
+    user.setPasswordResetExpiresAt(expiresAt);
+
+    userRepository.save(user);
+
+    // 4. Afficher un faux lien de réinitialisation (à remplacer par envoi email plus tard)
+    System.out.println("[🔐 MOT DE PASSE OUBLIÉ]");
+    System.out.println("→ Lien de réinitialisation : https://opossum.app/reset-password?token=" + resetToken);
+    System.out.println("→ Ce lien est valable jusqu’à : " + expiresAt);
+}
+
+public void resetPassword(String token, String newPassword) {
+    // 1. Vérifier que le token correspond à un utilisateur
+    Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
+
+    if (optionalUser.isEmpty()) {
+        throw new IllegalArgumentException("Token invalide.");
+    }
+
+    User user = optionalUser.get();
+
+    // 2. Vérifier la date d’expiration
+    Instant now = Instant.now();
+    Instant expiresAt = user.getPasswordResetExpiresAt();
+
+    if (expiresAt == null || expiresAt.isBefore(now)) {
+        throw new IllegalArgumentException("Le lien de réinitialisation a expiré.");
+    }
+
+    // 3. Hacher le nouveau mot de passe
+    String hashedPassword = passwordEncoder.encode(newPassword);
+    user.setPasswordHash(hashedPassword);
+
+    // 4. Supprimer les infos de reset
+    user.setPasswordResetToken(null);
+    user.setPasswordResetExpiresAt(null);
+
+    // 5. Sauvegarder
+    userRepository.save(user);
+
+    System.out.println("[✅ MOT DE PASSE MIS À JOUR POUR : " + user.getEmail() + "]");
+}
+
+
+
 }
