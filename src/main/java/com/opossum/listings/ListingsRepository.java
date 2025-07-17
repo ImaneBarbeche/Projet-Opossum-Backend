@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface listingsRepository extends JpaRepository<listings, UUID> {
+public interface ListingsRepository extends JpaRepository<Listings, UUID> {
 
-    List<listings> findByUserId(UUID userId);
+    List<Listings> findByUserId(UUID userId);
 
-    List<listings> findByIsLost(boolean isLost);
+    List<Listings> findByIsLost(boolean isLost);
 
-    List<listings> findByTitleContainingIgnoreCase(String title);
+    List<Listings> findByTitleContainingIgnoreCase(String title);
 }

@@ -2,31 +2,21 @@
 spring:
   application:
     name: opossum-backend
-  
-  # Configuration base de données
+
   datasource:
-    url: jdbc:postgresql://trolley.proxy.rlwy.net:8080/railway
-    username: postgres
-    password: czeCDrCFNBOQwWQjgcymtCJhPjuMsTaF
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-  
-  # Configuration JPA
+    
+
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
     properties:
       hibernate:
         '[format_sql]': true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
-# Configuration serveur
-server:
-  port: 8080
-  servlet:
-    context-path: /api
-
-# Configuration JWT personnalisée
-jwt:
-  secret: ${JWT_SECRET:opossum-secret-key-very-long-and-secure}
-  expiration: 86400000 # 24 heures

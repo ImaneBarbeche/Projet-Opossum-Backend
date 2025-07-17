@@ -9,34 +9,34 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class listingsService {
+public class ListingsService {
 
-    private final listingsRepository listingsRepository;
+    private final ListingsRepository listingsRepository;
 
-    public listingsService(listingsRepository listingsRepository) {
+    public ListingsService(ListingsRepository listingsRepository) {
         this.listingsRepository = listingsRepository;
     }
 
-    public listings createListing(listings listing) {
+    public Listings createListing(Listings listing) {
         listing.setCreatedAt(Instant.now());
         listing.setUpdatedAt(Instant.now());
         return listingsRepository.save(listing);
     }
 
-    public List<listings> getAllListings(boolean isLost) {
+    public List<Listings> getAllListings(boolean isLost) {
         return listingsRepository.findByIsLost(isLost);
     }
 
-    public List<listings> getListingsByUser(UUID userId) {
+    public List<Listings> getListingsByUser(UUID userId) {
         return listingsRepository.findByUserId(userId);
     }
 
-    public Optional<listings> getListingById(UUID id) {
+    public Optional<Listings> getListingById(UUID id) {
         return listingsRepository.findById(id);
     }
 
     @Transactional
-    public Optional<listings> updateListing(UUID id, listings updated) {
+    public Optional<Listings> updateListing(UUID id, Listings updated) {
         return listingsRepository.findById(id).map(existing -> {
             existing.setTitle(updated.getTitle());
             existing.setDescription(updated.getDescription());
@@ -50,7 +50,7 @@ public class listingsService {
         listingsRepository.deleteById(id);
     }
 
-    public List<listings> searchListings(String title) {
+    public List<Listings> searchListings(String title) {
         return listingsRepository.findByTitleContainingIgnoreCase(title);
     }
 }

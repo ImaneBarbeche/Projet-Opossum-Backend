@@ -8,43 +8,48 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/listings")
-public class listingsController {
+@RequestMapping("/api/v1/listings")
+public class ListingsController {
 
-    private final listingsService listingsService;
+    private final ListingsService ListingsService;
 
-    public listingsController(listingsService listingsService) {
-        this.listingsService = listingsService;
+    public ListingsController(ListingsService ListingsService) {
+        this.ListingsService = ListingsService;
     }
 
-    @PostMapping
-    public ResponseEntity<listings> create(@RequestBody listings listings) {
-        return ResponseEntity.ok(listingsService.createListing(listings));
+    @PostMapping("/create")
+    public ResponseEntity<Listings> create(@RequestBody Listings listings) {
+        return ResponseEntity.ok(ListingsService.createListing(listings));
     }
 
-
-    
-
-    @PutMapping("/{id}")
-    public ResponseEntity<listings> update(@PathVariable UUID id, @RequestBody listings listings) {
-        Optional<listings> updated = listingsService.updateListing(id, listings);
+    @PutMapping("{id}/update")
+    public ResponseEntity<Listings> update(@PathVariable UUID id, @RequestBody Listings listings) {
+        Optional<Listings> updated = ListingsService.updateListing(id, listings);
         return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/delete")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        listingsService.deleteListing(id);
+        ListingsService.deleteListing(id);
         return ResponseEntity.noContent().build();
     }
 
-     @GetMapping("/search")
-    public ResponseEntity<List<listings>> search(@RequestParam String title) {
-        return ResponseEntity.ok(listingsService.searchListings(title));
+    @GetMapping("/search")
+    public ResponseEntity<List<Listings>> search(@RequestParam String title) {
+        return ResponseEntity.ok(ListingsService.searchListings(title));
     }
-    
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<listings>> getUserlistings(@PathVariable UUID userId) {
-        return ResponseEntity.ok(listingsService.getListingsByUser(userId));
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Listings> getListingById(@PathVariable UUID id) {
+        return ListingsService.getListingById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
-   
+
+    @GetMapping("/me")
+    public ResponseEntity<List<Listings>> getListingsByUser(@RequestParam UUID userId) {
+        List<Listings> listings = ListingsService.getListingsByUser(userId);
+        return ResponseEntity.ok(listings);
+    }
+
 }
