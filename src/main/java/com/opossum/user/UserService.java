@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.opossum.token.RefreshTokenService;
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
 // import com.opossum.user.UserNotFoundException;
@@ -20,11 +21,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     // @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public List<User> getAllUsers() {
@@ -49,6 +52,8 @@ public class UserService {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(id);
         }
+        // Delete all refresh tokens for this user first
+        refreshTokenService.deleteAllForUser(id);
         userRepository.deleteById(id);
     }
 
@@ -129,5 +134,4 @@ public class UserService {
                     );
         }
     }
-                
-                
+

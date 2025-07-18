@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
@@ -88,5 +89,13 @@ public class RefreshTokenService {
         }
 
         return refreshToken.getUser();
+    }
+
+    /**
+     * Supprime tous les refresh tokens d'un utilisateur (avant suppression du compte)
+     */
+    @Transactional
+    public void deleteAllForUser(UUID userId) {
+        refreshTokenRepository.deleteByUser_Id(userId);
     }
 }

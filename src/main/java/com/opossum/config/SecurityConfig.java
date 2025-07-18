@@ -1,4 +1,3 @@
-
 package com.opossum.config;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,7 +38,8 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
+                .requestMatchers("/api/v1/auth/**", "/api/v1/public/**").permitAll()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

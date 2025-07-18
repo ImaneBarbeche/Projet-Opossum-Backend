@@ -16,6 +16,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+
+import com.opossum.user.dto.DeleteProfileRequest;
+import com.opossum.user.dto.DeleteProfileResponse;
+import com.opossum.user.dto.ErrorResponse;
 import com.opossum.user.dto.UpdatePasswordRequest;
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
@@ -100,12 +104,55 @@ public class UserController {
     }
 
     /**
-     * Supprimer son propre compte
+     * Supprimer définitivement son propre compte
      */
-    @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/deleteProfile")
+    public ResponseEntity<?> deleteProfile(
+            @RequestBody DeleteProfileRequest request,
+            java.security.Principal principal
+    ) {
+        if (principal == null || principal.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new DeleteProfileResponse(false, new ErrorResponse("UNAUTHORIZED", "Utilisateur non authentifié"), Instant.now())
+            );
+        }
+        Optional<User> userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new DeleteProfileResponse(false, new ErrorResponse("USER_NOT_FOUND", "Utilisateur introuvable"), Instant.now())
+            );
+        }
+        User user = userOpt.get();
+        // Validation : mot de passe requis
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                new DeleteProfileResponse(false, new ErrorResponse("INVALID_PASSWORD", "Mot de passe requis"), Instant.now())
+            );
+        }
+        // Validation : confirmation requise
+        if (!request.isConfirmDeletion()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                new DeleteProfileResponse(false, new ErrorResponse("CONFIRMATION_REQUIRED", "Confirmation de suppression requise"), Instant.now())
+            );
+        }
+        // Vérification du mot de passe
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new DeleteProfileResponse(false, new ErrorResponse("INVALID_PASSWORD", "Mot de passe incorrect"), Instant.now())
+            );
+        }
+        // Vérification utilisateur actif
+        if (!user.isActive()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new DeleteProfileResponse(false, new ErrorResponse("USER_INACTIVE", "Utilisateur inactif"), Instant.now())
+            );
+        }
+        // Suppression des données utilisateur
+        userService.deleteUser(user.getId());
+        // TODO: Supprimer les refresh tokens associés, envoyer email de confirmation
+        return ResponseEntity.ok(
+            new DeleteProfileResponse(true, null, Instant.now(), "Compte supprimé définitivement")
+        );
     }
 
     @GetMapping("/auth/verify-email/{token}")
