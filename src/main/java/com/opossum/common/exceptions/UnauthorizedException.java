@@ -5,8 +5,8 @@ package com.opossum.common.exceptions;
  */
 public class UnauthorizedException extends RuntimeException {
 
-    public UnauthorizedException(String string) {
-        //TODO Auto-generated constructor stub
+    public UnauthorizedException(String message) {
+        super(message);
     }
     // Exception UnauthorizedException à implémenter
 }
