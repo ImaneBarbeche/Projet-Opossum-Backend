@@ -16,9 +16,11 @@ spring:
       ddl-auto: update
     show-sql: false
     properties:
-      hibernate:
+     hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
 server:
   port: 8080

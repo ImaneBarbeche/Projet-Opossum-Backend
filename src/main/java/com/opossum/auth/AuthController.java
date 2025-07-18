@@ -82,21 +82,21 @@ public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordReque
     return ResponseEntity.ok().build();
 }
 
-@GetMapping("/verify")
-public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
-    Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
+// @GetMapping("/verify")
+// public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
+//     Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
 
-    if (optionalUser.isEmpty()) {
-        return ResponseEntity.badRequest().body("Lien de vérification invalide ou expiré.");
-    }
+//     if (optionalUser.isEmpty()) {
+//         return ResponseEntity.badRequest().body("Lien de vérification invalide ou expiré.");
+//     }
 
-    User user = optionalUser.get();
-    user.setIsEmailVerified(true);
-    user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
-    userRepository.save(user);
+//     User user = optionalUser.get();
+//     user.setIsEmailVerified(true);
+//     user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
+//     userRepository.save(user);
 
-    return ResponseEntity.ok("Email vérifié avec succès !");
-}
+//     return ResponseEntity.ok("Email vérifié avec succès !");
+// }
 
 
 }
