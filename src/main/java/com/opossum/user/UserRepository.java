@@ -34,4 +34,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     }
 
     Optional<User> findByPasswordResetToken(String token);
+
+
 }

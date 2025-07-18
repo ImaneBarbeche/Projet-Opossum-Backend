@@ -231,4 +231,9 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return isActive;
     }
+
+    public void setIsEmailVerified(boolean b) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setIsEmailVerified'");
+    }
 }

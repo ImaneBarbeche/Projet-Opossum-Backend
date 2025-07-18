@@ -31,6 +31,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final EmailService emailService;
 
     /**
      * Constructeur sans Lombok
@@ -39,12 +40,14 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
             JwtUtil jwtUtil,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
+        this.emailService = emailService;
     }
 
     /**
@@ -62,6 +65,10 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Identifiants incorrects");
 
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new UnauthorizedException("Veuillez vérifier votre adresse email avant de vous connecter.");
         }
 
         System.out.println("Connexion réussie pour : " + user.getEmail());
@@ -96,7 +103,11 @@ public class AuthService {
         user.setEmailVerified(false);
         user.setCreatedAt(Instant.now());
 
+        user.setEmailVerificationToken(UUID.randomUUID().toString());
+        user.setIsEmailVerified(false); // Facultatif, mais explicite
+
         userRepository.save(user);
+        emailService.sendVerificationEmail(user.getEmail(), user.getEmailVerificationToken());
 
         return buildAuthResponse(user);
     }
@@ -127,64 +138,62 @@ public class AuthService {
     }
 
     public void forgotPassword(String email) {
-    // 1. Trouver l’utilisateur
-    Optional<User> optionalUser = userRepository.findByEmail(email);
+        // 1. Trouver l’utilisateur
+        Optional<User> optionalUser = userRepository.findByEmail(email);
 
-    if (optionalUser.isEmpty()) {
-        // Pour ne pas divulguer si un compte existe ou pas : on ne dit rien
-        return;
+        if (optionalUser.isEmpty()) {
+            // Pour ne pas divulguer si un compte existe ou pas : on ne dit rien
+            return;
+        }
+
+        User user = optionalUser.get();
+
+        // 2. Générer le token de reset
+        String resetToken = UUID.randomUUID().toString();
+        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30)); // valide 30 min
+
+        // 3. Mettre à jour l’utilisateur
+        user.setPasswordResetToken(resetToken);
+        user.setPasswordResetExpiresAt(expiresAt);
+
+        userRepository.save(user);
+
+        // 4. Afficher un faux lien de réinitialisation (à remplacer par envoi email plus tard)
+        System.out.println("[🔐 MOT DE PASSE OUBLIÉ]");
+        System.out.println("→ Lien de réinitialisation : https://opossum.app/reset-password?token=" + resetToken);
+        System.out.println("→ Ce lien est valable jusqu’à : " + expiresAt);
     }
 
-    User user = optionalUser.get();
+    public void resetPassword(String token, String newPassword) {
+        // 1. Vérifier que le token correspond à un utilisateur
+        Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
 
-    // 2. Générer le token de reset
-    String resetToken = UUID.randomUUID().toString();
-    Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30)); // valide 30 min
+        if (optionalUser.isEmpty()) {
+            throw new IllegalArgumentException("Token invalide.");
+        }
 
-    // 3. Mettre à jour l’utilisateur
-    user.setPasswordResetToken(resetToken);
-    user.setPasswordResetExpiresAt(expiresAt);
+        User user = optionalUser.get();
 
-    userRepository.save(user);
+        // 2. Vérifier la date d’expiration
+        Instant now = Instant.now();
+        Instant expiresAt = user.getPasswordResetExpiresAt();
 
-    // 4. Afficher un faux lien de réinitialisation (à remplacer par envoi email plus tard)
-    System.out.println("[🔐 MOT DE PASSE OUBLIÉ]");
-    System.out.println("→ Lien de réinitialisation : https://opossum.app/reset-password?token=" + resetToken);
-    System.out.println("→ Ce lien est valable jusqu’à : " + expiresAt);
-}
+        if (expiresAt == null || expiresAt.isBefore(now)) {
+            throw new IllegalArgumentException("Le lien de réinitialisation a expiré.");
+        }
 
-public void resetPassword(String token, String newPassword) {
-    // 1. Vérifier que le token correspond à un utilisateur
-    Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
+        // 3. Hacher le nouveau mot de passe
+        String hashedPassword = passwordEncoder.encode(newPassword);
+        user.setPasswordHash(hashedPassword);
 
-    if (optionalUser.isEmpty()) {
-        throw new IllegalArgumentException("Token invalide.");
+        // 4. Supprimer les infos de reset
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiresAt(null);
+
+        // 5. Sauvegarder
+        userRepository.save(user);
+
+        System.out.println("[✅ MOT DE PASSE MIS À JOUR POUR : " + user.getEmail() + "]");
     }
-
-    User user = optionalUser.get();
-
-    // 2. Vérifier la date d’expiration
-    Instant now = Instant.now();
-    Instant expiresAt = user.getPasswordResetExpiresAt();
-
-    if (expiresAt == null || expiresAt.isBefore(now)) {
-        throw new IllegalArgumentException("Le lien de réinitialisation a expiré.");
-    }
-
-    // 3. Hacher le nouveau mot de passe
-    String hashedPassword = passwordEncoder.encode(newPassword);
-    user.setPasswordHash(hashedPassword);
-
-    // 4. Supprimer les infos de reset
-    user.setPasswordResetToken(null);
-    user.setPasswordResetExpiresAt(null);
-
-    // 5. Sauvegarder
-    userRepository.save(user);
-
-    System.out.println("[✅ MOT DE PASSE MIS À JOUR POUR : " + user.getEmail() + "]");
-}
-
-
 
 }
