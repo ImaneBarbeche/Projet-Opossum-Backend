@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
-import com.opossum.user.UserNotFoundException;
+// import com.opossum.user.UserNotFoundException;
 
 @Service
 @Transactional(readOnly = true)
@@ -21,7 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
+    // @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;

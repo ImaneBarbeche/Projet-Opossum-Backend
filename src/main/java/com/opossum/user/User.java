@@ -19,51 +19,52 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue
+    @Column(name = "id")
     private UUID id;
 
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "passwordHash", nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "firstName", nullable = false, length = 100)
+    @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
-    @Column(name = "lastName", nullable = false, length = 100)
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Column(length = 20)
+    @Column(name = "phone", length = 20)
     private String phone;
 
     @Column(name = "avatar", length = 500) // Gardé comme dans la version principale
     private String avatar;
 
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private String role;
 
-    @Column(name = "isActive")
+    @Column(name = "is_active")
     private boolean isActive = true;
 
-    @Column(name = "isEmailVerified")
+    @Column(name = "is_email_verified")
     private boolean isEmailVerified = false;
 
-    @Column(name = "emailVerificationToken")
+    @Column(name = "email_verification_token")
     private String emailVerificationToken;
 
-    @Column(name = "passwordResetToken")
+    @Column(name = "password_reset_token")
     private String passwordResetToken;
 
-    @Column(name = "passwordResetExpiresAt")
+    @Column(name = "password_reset_expires_at")
     private Instant passwordResetExpiresAt;
 
-    @Column(name = "createdAt", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-    @Column(name = "updatedAt")
+    @Column(name = "updated_at")
     private Instant updatedAt = Instant.now();
 
-    @Column(name = "lastLoginAt")
+    @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
     // === Getters & Setters ===
@@ -233,7 +234,6 @@ public class User implements UserDetails {
     }
 
     public void setIsEmailVerified(boolean b) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setIsEmailVerified'");
+        this.isEmailVerified = b;
     }
 }

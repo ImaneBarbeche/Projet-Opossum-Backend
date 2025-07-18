@@ -1,5 +1,4 @@
 package com.opossum.auth;
-
 import com.opossum.auth.dto.AuthResponse;
 import com.opossum.auth.dto.LoginRequest;
 import com.opossum.auth.dto.RegisterRequest;
@@ -9,12 +8,14 @@ import com.opossum.user.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.opossum.auth.dto.ForgotPasswordRequest;
 import com.opossum.auth.dto.ResetPasswordRequest;
-import java.util.Optional;
 /**
  * Contrôleur REST pour gérer l'authentification : - Inscription (register) -
  * Connexion (login)
@@ -33,6 +34,7 @@ public class AuthController {
     public AuthController(AuthService authService, UserRepository userRepository) {
         this.authService = authService;
         this.userRepository = userRepository;
+        System.out.println(">>> AuthController instancié !");
     }
 
     /**
@@ -82,21 +84,20 @@ public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordReque
     return ResponseEntity.ok().build();
 }
 
-// @GetMapping("/verify")
-// public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
-//     Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
+@GetMapping("/verify-email")
+public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
+    Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
 
-//     if (optionalUser.isEmpty()) {
-//         return ResponseEntity.badRequest().body("Lien de vérification invalide ou expiré.");
-//     }
+    if (optionalUser.isEmpty()) {
+        return ResponseEntity.badRequest().body("Lien de vérification invalide ou expiré.");
+    }
 
-//     User user = optionalUser.get();
-//     user.setIsEmailVerified(true);
-//     user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
-//     userRepository.save(user);
+    User user = optionalUser.get();
+    user.setIsEmailVerified(true);
+    user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
+    userRepository.save(user);
 
-//     return ResponseEntity.ok("Email vérifié avec succès !");
-// }
-
+    return ResponseEntity.ok("Email vérifié avec succès !");
+}
 
 }
