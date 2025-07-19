@@ -73,15 +73,55 @@ public ResponseEntity<AuthResponse> refreshToken(HttpServletRequest request) {
 }
 
 @PostMapping("/forgot-password")
-public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+public ResponseEntity<Object> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+    // Appel du service (ne divulgue pas si l'email existe ou non)
     authService.forgotPassword(request.getEmail());
-    return ResponseEntity.ok().build();
+    // Réponse générique
+    return ResponseEntity.ok(
+        java.util.Map.of(
+            "success", true,
+            "message", "Email de réinitialisation envoyé",
+            "timestamp", java.time.Instant.now().toString()
+        )
+    );
 }
 
 @PostMapping("/reset-password")
-public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
-    authService.resetPassword(request.getToken(), request.getNewPassword());
-    return ResponseEntity.ok().build();
+public ResponseEntity<Object> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+    // Validation du mot de passe
+    if (request.getNewPassword() == null || request.getNewPassword().length() < 8) {
+        return ResponseEntity.badRequest().body(
+            java.util.Map.of(
+                "success", false,
+                "error", java.util.Map.of(
+                    "code", "INVALID_PASSWORD",
+                    "message", "Le mot de passe doit contenir au moins 8 caractères"
+                ),
+                "timestamp", java.time.Instant.now().toString()
+            )
+        );
+    }
+    try {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(
+            java.util.Map.of(
+                "success", true,
+                "message", "Mot de passe réinitialisé avec succès",
+                "timestamp", java.time.Instant.now().toString()
+            )
+        );
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(
+            java.util.Map.of(
+                "success", false,
+                "error", java.util.Map.of(
+                    "code", "INVALID_OR_EXPIRED_TOKEN",
+                    "message", "Le lien de réinitialisation est invalide ou expiré"
+                ),
+                "timestamp", java.time.Instant.now().toString()
+            )
+        );
+    }
 }
 
 @GetMapping("/verify-email")

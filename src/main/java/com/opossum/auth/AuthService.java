@@ -33,6 +33,9 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final EmailService emailService;
 
+    @org.springframework.beans.factory.annotation.Value("${FRONTEND_URL}")
+    private String frontendUrl;
+
     /**
      * Constructeur sans Lombok
      */
@@ -158,9 +161,10 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // 4. Afficher un faux lien de réinitialisation (à remplacer par envoi email plus tard)
+        // 4. Afficher le lien de réinitialisation dynamique (à remplacer par envoi email plus tard)
+        String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
         System.out.println("[🔐 MOT DE PASSE OUBLIÉ]");
-        System.out.println("→ Lien de réinitialisation : https://opossum.app/reset-password?token=" + resetToken);
+        System.out.println("→ Lien de réinitialisation : " + resetLink);
         System.out.println("→ Ce lien est valable jusqu’à : " + expiresAt);
     }
 
