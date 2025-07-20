@@ -14,34 +14,58 @@ import com.opossum.auth.JwtFilter;
 
 /**
  * Configuration de sécurité Spring Security
- * Gestion de l'authentification JWT et des autorisations
+ * <p>
+ * - Définit le filtre JWT pour l'authentification par token
+ * - Configure les routes publiques et protégées
+ * - Désactive la protection CSRF (API REST)
+ * - Définit l'encodeur de mot de passe (BCrypt)
  */
 @Configuration
 public class SecurityConfig {
+    /**
+     * Filtre JWT injecté pour valider les tokens sur chaque requête.
+     */
     private final JwtFilter jwtFilter;
 
+    /**
+     * Constructeur avec injection du filtre JWT.
+     */
     public SecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
+    /**
+     * Bean Spring pour encoder les mots de passe avec BCrypt.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Bean Spring pour récupérer l'AuthenticationManager (utilisé pour l'authentification).
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * Bean principal de configuration de la sécurité HTTP.
+     * <p>
+     * - Désactive CSRF (inutile pour une API REST)
+     * - Autorise l'accès public aux routes /api/v1/auth/** et /api/v1/public/**
+     * - Protège toutes les autres routes (authentification requise)
+     * - Ajoute le filtre JWT avant le filtre d'authentification standard
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf.disable()) // Désactive CSRF pour les requêtes API
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**", "/api/v1/public/**").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers("/api/v1/auth/**", "/api/v1/public/**").permitAll() // Routes publiques
+                .anyRequest().authenticated() // Toutes les autres routes nécessitent un token
             )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // Ajout du filtre JWT
         return http.build();
     }
 }

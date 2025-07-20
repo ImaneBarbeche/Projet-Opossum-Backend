@@ -1,45 +1,61 @@
+###############################################################
+# Configuration principale de l'application Spring Boot
+###############################################################
 spring:
   application:
-    name: opossum-backend
+    name: opossum-backend # Nom de l'application
 
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:dev} # Profil actif (dev, prod, etc.)
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME} # URL de la base de données
+    username: ${DB_USERNAME} # Utilisateur DB
+    password: ${DB_PASSWORD} # Mot de passe DB
+    driver-class-name: org.postgresql.Driver # Driver JDBC
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: update # Mise à jour automatique du schéma
+    show-sql: false # Affiche les requêtes SQL dans la console
     properties:
      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true # Formatage lisible des requêtes SQL
+        dialect: org.hibernate.dialect.PostgreSQLDialect # Dialecte PostgreSQL
         naming:
-          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl # Stratégie de nommage
+
+###############################################################
+# Configuration du serveur HTTP
+###############################################################
 
 server:
-  port: 8080
+  port: 8080 # Port d'écoute du backend
   servlet:
-    context-path: /
+    context-path: / # Chemin racine de l'API
   error:
-    include-stacktrace: always
-    include-message: always
+    include-stacktrace: always # Affiche la stacktrace dans les erreurs HTTP
+    include-message: always # Affiche le message d'erreur
 
+###############################################################
+# Configuration JWT (authentification par token)
+###############################################################
 jwt:
-  secret: ${JWT_SECRET}
-  expiration: 86400000 # 24 heures
+  secret: ${JWT_SECRET} # Clé secrète pour signer les tokens
+  expiration: 86400000 # Durée de validité du token (24h en ms)
 
+###############################################################
+# Configuration de l'envoi d'emails
+###############################################################
 mail:
-  host: ${MAIL_HOST}
-  port: ${MAIL_PORT}
-  username: ${MAIL_USERNAME}
-  password: ${MAIL_PASSWORD}
-  from: ${MAIL_FROM}
+  host: ${MAIL_HOST} # Serveur SMTP
+  port: ${MAIL_PORT} # Port SMTP
+  username: ${MAIL_USERNAME} # Identifiant SMTP
+  password: ${MAIL_PASSWORD} # Mot de passe SMTP
+  from: ${MAIL_FROM} # Adresse d'expédition
 
+###############################################################
+# Configuration du stockage de fichiers
+###############################################################
 file:
-  upload-path: ${UPLOAD_PATH}
+  upload-path: ${UPLOAD_PATH} # Chemin de stockage des fichiers uploadés
