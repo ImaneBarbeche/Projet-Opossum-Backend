@@ -1,4 +1,4 @@
-package com.opossum.user;
+package com.opossum.user.dto;
 
 import java.util.UUID;
 
@@ -6,6 +6,7 @@ import java.util.UUID;
  * DTO retourné à l'utilisateur connecté pour la route /me
  */
 public class UserProfileResponse {
+
     private UUID id;
     private String email;
     private String firstName;
@@ -23,7 +24,6 @@ public class UserProfileResponse {
     }
 
     // Getters & setters
-
     public UUID getId() {
         return id;
     }

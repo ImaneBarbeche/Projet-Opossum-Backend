@@ -15,23 +15,31 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
+    /**
+     * *********** ✨ Windsurf Command ⭐  ************
+     */
+    /**
+     * Recherche un utilisateur par son token de vérification d'email
+     */
+    /**
+     * ***** 0d962529-6b18-4710-abff-aae19447e4e1  ******
+     */
     @Query("SELECT u FROM User u WHERE u.emailVerificationToken = :token")
     Optional<User> findByEmailVerificationToken(@Param("token") String token);
 
     /**
-     * Recherche un utilisateur par son email (login)
+     * Recherche un utilisateur par son email
      */
     Optional<User> findByEmail(String email);
 
     /**
      * Vérifie si un email est déjà utilisé
      */
-    @Query("SELECT COUNT(u) FROM User u WHERE u.email = :email")
-    long countByEmail(@Param("email") String email);
+    boolean existsByEmail(String email);
 
-    default boolean existsByEmail(String email) {
-        return countByEmail(email) > 0;
-    }
-
+    /**
+     * Recherche un utilisateur par son token de réinitialisation de mot de
+     * passe
+     */
     Optional<User> findByPasswordResetToken(String token);
 }

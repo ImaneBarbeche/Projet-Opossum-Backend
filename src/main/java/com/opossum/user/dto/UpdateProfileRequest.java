@@ -10,11 +10,11 @@ import jakarta.validation.constraints.Size;
 public class UpdateProfileRequest {
 
     @NotBlank(message = "Le prénom est obligatoire")
-    @Size(min = 2, max = 50, message = "Le prénom doit contenir entre 2 et 50 caractères")
+    @Size(min = 1, max = 50, message = "Le prénom doit contenir entre 1 et 50 caractères")
     private String firstName; // CamelCase cohérent avec le premier fichier
 
     @NotBlank(message = "Le nom est obligatoire")
-    @Size(min = 2, max = 50, message = "Le nom doit contenir entre 2 et 50 caractères")
+    @Size(min = 1, max = 50, message = "Le nom doit contenir entre 1 et 50 caractères")
     private String lastName; // CamelCase cohérent avec le premier fichier
 
     @NotBlank(message = "L'email est obligatoire")
