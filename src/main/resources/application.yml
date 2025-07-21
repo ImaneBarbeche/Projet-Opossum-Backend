@@ -24,7 +24,7 @@ spring:
 
   web:
     resources:
-      add-mappings: false
+      add-mappings: true # Allow serving static resources from the classpath
 
   mail:
     host: ${MAIL_HOST}
@@ -41,6 +41,7 @@ spring:
 
 server:
   port: 8080
+  address: 0.0.0.0
   servlet:
     context-path: /
   error:

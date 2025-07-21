@@ -90,9 +90,12 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+    public ResponseEntity<java.util.Map<String, Object>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
-        return ResponseEntity.ok().build();
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "Mot de passe réinitialisé avec succès.");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/verify-email")
