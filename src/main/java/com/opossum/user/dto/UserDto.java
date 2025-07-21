@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 public class UserDto {
-
     private UUID id;
     private String firstname;
     private String lastname;

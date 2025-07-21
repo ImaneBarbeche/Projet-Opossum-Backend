@@ -18,9 +18,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.opossum.user.dto.DeleteProfileRequest;
 import com.opossum.user.dto.DeleteProfileResponse;
 import com.opossum.user.dto.ErrorResponse;
-import com.opossum.user.dto.UpdatePasswordRequest;
+import com.opossum.user.dto.ChangePasswordRequest;
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
+import com.opossum.user.dto.PublicUserDto;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
@@ -29,7 +30,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("api/v1/user")
+@RequestMapping("api/v1/users")
 public class UserController {
 
     private final UserService userService;
@@ -56,17 +57,8 @@ public void init() {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non connecté.");
         }
-
-        return ResponseEntity.ok(
-                new UserProfileResponse(
-                        user.getId(),
-                        user.getEmail(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        user.getPhone(),
-                        user.getRole()
-                )
-        );
+        UserDto dto = userService.mapToDto(user);
+        return ResponseEntity.ok(dto);
     }
 
  
@@ -74,32 +66,102 @@ public void init() {
      * Mettre à jour son profil (prénom, nom, téléphone)
      */
     @PutMapping("/update-profile")
-    public ResponseEntity<User> updateProfile(
+    public ResponseEntity<?> updateProfile(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setPhone(request.getPhone());
-        user.setUpdatedAt(Instant.now());
-
-        User updated = userRepository.save(user);
-        return ResponseEntity.ok(updated);
+        boolean changed = false;
+        if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
+            user.setFirstName(request.getFirstName());
+            changed = true;
+        }
+        if (request.getLastName() != null && !request.getLastName().isBlank()) {
+            user.setLastName(request.getLastName());
+            changed = true;
+        }
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            user.setPhone(request.getPhone());
+            changed = true;
+        }
+        if (request.getAvatar() != null && !request.getAvatar().isBlank()) {
+            user.setAvatar(request.getAvatar());
+            changed = true;
+        }
+        if (changed) {
+            user.setUpdatedAt(Instant.now());
+            userRepository.save(user);
+        }
+        UserDto dto = userService.mapToDto(user);
+        return ResponseEntity.ok(
+            java.util.Map.of(
+                "success", true,
+                "data", dto,
+                "message", "Profil mis à jour avec succès",
+                "timestamp", Instant.now()
+            )
+        );
     }
 
     /**
-     * Changer son mot de passe
+     * Changer son mot de passe (avec vérification de l'ancien)
      */
     @PutMapping("/update-password")
-    public ResponseEntity<Void> updatePassword(
+    public ResponseEntity<?> updatePassword(
             @AuthenticationPrincipal User user,
-            @Valid @RequestBody UpdatePasswordRequest request
+            @Valid @RequestBody ChangePasswordRequest request
     ) {
-        // Tu peux ajouter ici une vérification de l'ancien mot de passe
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "UNAUTHORIZED",
+                        "message", "Utilisateur non connecté"
+                    ),
+                    "timestamp", Instant.now()
+                )
+            );
+        }
+        // Vérifier l'ancien mot de passe
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "INVALID_CURRENT_PASSWORD",
+                        "message", "Mot de passe actuel incorrect"
+                    ),
+                    "timestamp", Instant.now()
+                )
+            );
+        }
+        // Vérifier que le nouveau mot de passe est différent
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "PASSWORD_UNCHANGED",
+                        "message", "Le nouveau mot de passe doit être différent de l'actuel"
+                    ),
+                    "timestamp", Instant.now()
+                )
+            );
+        }
+        // Mettre à jour le mot de passe
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         user.setUpdatedAt(Instant.now());
         userRepository.save(user);
-        return ResponseEntity.noContent().build(); // 204 No Content
+        // Invalider tous les refresh tokens de l'utilisateur
+        userService.invalidateAllTokensForUser(user.getId());
+        // TODO: Envoyer un email de notification
+        return ResponseEntity.ok(
+            java.util.Map.of(
+                "success", true,
+                "message", "Mot de passe modifié avec succès",
+                "timestamp", Instant.now()
+            )
+        );
     }
 
 /**
@@ -175,12 +237,105 @@ public void init() {
     }
 
 
-    @GetMapping("/profiles/{id}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable UUID id) {
-        return userService.getUserById(id)
-                .map(userService::mapToDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+
+    /**
+     * Voir un profil utilisateur (privé si 'me', public sinon)
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserProfile(
+            @PathVariable String id,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        if ("me".equalsIgnoreCase(id)) {
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    java.util.Map.of(
+                        "success", false,
+                        "error", java.util.Map.of(
+                            "code", "UNAUTHORIZED",
+                            "message", "Token JWT invalide ou expiré"
+                        ),
+                        "timestamp", Instant.now()
+                    )
+                );
+            }
+            if (!currentUser.isActive()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    java.util.Map.of(
+                        "success", false,
+                        "error", java.util.Map.of(
+                            "code", "USER_BLOCKED",
+                            "message", "Ce profil n’est pas accessible"
+                        ),
+                        "timestamp", Instant.now()
+                    )
+                );
+            }
+            UserDto dto = userService.mapToDto(currentUser);
+            return ResponseEntity.ok(
+                java.util.Map.of(
+                    "success", true,
+                    "data", dto,
+                    "timestamp", Instant.now()
+                )
+            );
+        }
+        // UUID demandé
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(id);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "USER_NOT_FOUND",
+                        "message", "Utilisateur introuvable"
+                    ),
+                    "timestamp", Instant.now()
+                )
+            );
+        }
+        Optional<User> userOpt = userService.getUserById(uuid);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "USER_NOT_FOUND",
+                        "message", "Utilisateur introuvable"
+                    ),
+                    "timestamp", Instant.now()
+                )
+            );
+        }
+        User user = userOpt.get();
+        if (!user.isActive()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "USER_BLOCKED",
+                        "message", "Ce profil n’est pas accessible"
+                    ),
+                    "timestamp", Instant.now()
+                )
+            );
+        }
+        PublicUserDto publicDto = new PublicUserDto(
+            user.getId(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getAvatar(),
+            user.getCreatedAt()
+        );
+        return ResponseEntity.ok(
+            java.util.Map.of(
+                "success", true,
+                "data", publicDto,
+                "timestamp", Instant.now()
+            )
+        );
     }
 
     @GetMapping

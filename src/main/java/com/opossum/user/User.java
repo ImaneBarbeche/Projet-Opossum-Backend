@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
+import com.opossum.user.Role;
 
 /**
  * Entité représentant un utilisateur de l'application OPOSSUM.
@@ -40,8 +41,9 @@ public class User implements UserDetails {
     @Column(name = "avatar", length = 500) 
     private String avatar;
 
-    @Column(name = "role", nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private Role role;
 
     @Column(name = "is_active")
     private boolean isActive = true;
@@ -125,11 +127,11 @@ public class User implements UserDetails {
         this.avatar = avatar;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
@@ -200,7 +202,7 @@ public class User implements UserDetails {
     // === Implémentation de UserDetails (Spring Security) ===
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override

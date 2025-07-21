@@ -8,6 +8,8 @@ import com.opossum.common.exceptions.UnauthorizedException;
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
 import com.opossum.token.RefreshTokenService;
+import com.opossum.token.RefreshTokenRepository;
+import com.opossum.token.RefreshToken;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -33,6 +35,7 @@ import com.opossum.token.RefreshTokenService;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private final AuthService authService;
     private final UserRepository userRepository;
@@ -42,10 +45,11 @@ public class AuthController {
      * Injection de dépendance par constructeur (manuellement). Pas de Lombok,
      * donc on écrit le constructeur à la main.
      */
-    public AuthController(AuthService authService, UserRepository userRepository, RefreshTokenService refreshTokenService) {
+    public AuthController(AuthService authService, UserRepository userRepository, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository) {
         this.authService = authService;
         this.userRepository = userRepository;
         this.refreshTokenService = refreshTokenService;
+        this.refreshTokenRepository = refreshTokenRepository;
         System.out.println(">>> AuthController instancié !");
     }
 
@@ -135,13 +139,30 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-@DeleteMapping("/logout")
-public ResponseEntity<?> logout(@AuthenticationPrincipal User user) {
-    refreshTokenService.deleteAllForUser(user.getId());
-
-    return ResponseEntity.ok().body(
-        Map.of("message", "Déconnexion réussie. Le refresh token a été supprimé.")
-    );
+@PostMapping("/logout")
+public ResponseEntity<Map<String, Object>> logout(@RequestBody Map<String, String> body) {
+    String refreshToken = body.get("refreshToken");
+    if (refreshToken == null || refreshToken.isBlank()) {
+        return ResponseEntity.badRequest().body(Map.of(
+            "success", false,
+            "message", "Le champ 'refreshToken' est requis.",
+            "timestamp", java.time.Instant.now()
+        ));
+    }
+    Optional<RefreshToken> optional = refreshTokenRepository.findByToken(refreshToken);
+    if (optional.isEmpty() || optional.get().isRevoked() || optional.get().getExpiresAt().isBefore(java.time.Instant.now())) {
+        return ResponseEntity.status(400).body(Map.of(
+            "success", false,
+            "message", "Token invalide ou déjà révoqué.",
+            "timestamp", java.time.Instant.now()
+        ));
+    }
+    refreshTokenService.revokeToken(refreshToken);
+    return ResponseEntity.ok(Map.of(
+        "success", true,
+        "message", "Déconnexion réussie",
+        "timestamp", java.time.Instant.now()
+    ));
 }
 
 

@@ -18,7 +18,6 @@ import com.opossum.user.dto.UserDto;
 @Service
 @Transactional(readOnly = true)
 public class UserService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
@@ -28,6 +27,14 @@ public class UserService {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
+    }
+
+    /**
+     * Invalide tous les refresh tokens d'un utilisateur (après changement de mot de passe)
+     */
+    @Transactional
+    public void invalidateAllTokensForUser(UUID userId) {
+        refreshTokenService.deleteAllForUser(userId);
     }
 
     public List<User> getAllUsers() {
@@ -71,18 +78,11 @@ public class UserService {
             user.setLastName(dto.getLastName());
         }
 
-        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
-            if (!user.getEmail().equals(dto.getEmail())) {
-                user.setEmail(dto.getEmail());
-                user.setEmailVerified(false); // Réinitialiser la vérification si email changé
-            }
-        }
-
-        if (dto.getPhone() != null) {
+        if (dto.getPhone() != null && !dto.getPhone().isBlank()) {
             user.setPhone(dto.getPhone());
         }
 
-        if (dto.getAvatar() != null) {
+        if (dto.getAvatar() != null && !dto.getAvatar().isBlank()) {
             user.setAvatar(dto.getAvatar());
         }
 
@@ -124,13 +124,13 @@ public class UserService {
                 user.getLastName(),
                 user.getEmail(),
                 user.getPhone(),
-                user.getAvatar(),
-                user.getRole(),
+                user.getAvatar(), // avatarUrl = avatar
+                user.getRole() != null ? user.getRole().name() : null, // enum to string
                 user.isActive(),
                 user.isEmailVerified(),
                 user.getCreatedAt(),
-                            user.getUpdatedAt(),
-                            user.getLastLoginAt()
-                    );
-        }
+                user.getUpdatedAt(),
+                user.getLastLoginAt()
+        );
     }
+}
