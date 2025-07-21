@@ -1,4 +1,3 @@
-
 package com.opossum.listings;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -121,6 +120,7 @@ public class Listings {
         return contactEmail;
     }
     // setters
+    
     public void setId(UUID id) {
         this.id = id;
     }
@@ -148,6 +148,38 @@ public class Listings {
         this.createdAt = createdAt;
     }
 
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setLatitude(java.math.BigDecimal latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(java.math.BigDecimal longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
@@ -171,4 +203,6 @@ public class Listings {
     public boolean getIsLost() {
         return isLost;
     }
+
+    // --- Added setters for DTO mapping ---
 }

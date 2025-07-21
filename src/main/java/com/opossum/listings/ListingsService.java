@@ -1,26 +1,26 @@
 package com.opossum.listings;
+
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
+import com.opossum.listings.common.exceptions.ForbiddenException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import com.opossum.listings.common.exceptions.ForbiddenException;
+import java.util.*;
 import java.util.UUID;
 
-@Service
-public class ListingsService {
+@Service public class ListingsService {
 
+    private final ListingsRepository listingsRepository;
     private final UserRepository userRepository;
 
     public ListingsService(ListingsRepository listingsRepository, UserRepository userRepository) {
         this.listingsRepository = listingsRepository;
         this.userRepository = userRepository;
-        }
+    }
         /**
          * Retourne les détails d'une annonce, formatés selon la doc API.
          * Vérifie la visibilité (ACTIVE ou propriétaire), ajoute infos user/contact/photo, gère 404, incrémente vues.
@@ -106,16 +106,15 @@ public class ListingsService {
             UUID userId = user.getId();
     
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            // Filtrer les annonces par utilisateur et éventuellement par type et statut
             List<Listings> filteredListings = listingsRepository.findAll(pageable)
-                    .stream()
-                    .filter(l -> l.getUserId().equals(userId))
-                    .filter(l -> type == null || (type.equalsIgnoreCase("LOST") && l.getIsLost()) || (type.equalsIgnoreCase("FOUND") && !l.getIsLost()))
-                    .filter(l -> status == null || (l.getStatus() != null && l.getStatus().equalsIgnoreCase(status)))
-                    .toList();
-            org.springframework.data.domain.Page<Listings> listingsPage = new org.springframework.data.domain.PageImpl<>(filteredListings, pageable, filteredListings.size());
+                .stream()
+                .filter(l -> l.getUserId().equals(userId))
+                .filter(l -> type == null || type.isBlank() || type.equalsIgnoreCase(l.getType()))
+                .filter(l -> status == null || status.isBlank() || status.equalsIgnoreCase(l.getStatus()))
+                .toList();
     
-            java.util.Map<String, Object> response = new java.util.HashMap<>();
-            response.put("success", true);
+            org.springframework.data.domain.Page<Listings> listingsPage = new org.springframework.data.domain.PageImpl<>(filteredListings, pageable, filteredListings.size());
             java.util.Map<String, Object> data = new java.util.HashMap<>();
             data.put("content", listingsPage.getContent());
             java.util.Map<String, Object> pageInfo = new java.util.HashMap<>();
@@ -124,21 +123,50 @@ public class ListingsService {
             pageInfo.put("totalElements", listingsPage.getTotalElements());
             pageInfo.put("totalPages", listingsPage.getTotalPages());
             data.put("page", pageInfo);
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("success", true);
             response.put("data", data);
             response.put("timestamp", java.time.Instant.now().toString());
             return response;
         }
-    
-        private final ListingsRepository listingsRepository;
-    
+    /**
+     * Mappe le DTO CreateListingsRequest vers l'entité Listings
+     */
+    public static Listings mapCreateRequestToEntity(com.opossum.listings.dto.CreateListingsRequest req) {
+        Listings l = new Listings();
+        l.setTitle(req.getTitle());
+        l.setDescription(req.getDescription());
+        l.setType(req.getType());
+        l.setCategory(req.getCategory());
+        // Location
+        if (req.getLocation() != null) {
+            if (req.getLocation().getLatitude() != null) l.setLatitude(java.math.BigDecimal.valueOf(req.getLocation().getLatitude()));
+            if (req.getLocation().getLongitude() != null) l.setLongitude(java.math.BigDecimal.valueOf(req.getLocation().getLongitude()));
+            l.setAddress(req.getLocation().getAddress());
+            l.setCity(req.getLocation().getCity());
+        }
+        // Contact info
+        if (req.getContactInfo() != null) {
+            l.setContactPhone(req.getContactInfo().getPhone());
+            l.setContactEmail(req.getContactInfo().getEmail());
+        }
+        // Photos (on ne prend que la première pour photoUrl)
+        if (req.getPhotos() != null && !req.getPhotos().isEmpty()) {
+            l.setPhotoUrl(req.getPhotos().get(0));
+        }
+        // Champs système et autres valeurs par défaut seront gérés dans createListing
+        return l;
+    }
+        /**
+         * Crée une annonce avec validation métier et valeurs par défaut.
+         */
         public Listings createListing(Listings listing, User user) {
-            // Initialisation des champs système
             listing.setUserId(user.getId());
             listing.setStatus("ACTIVE");
             listing.setCreatedAt(Instant.now());
             listing.setUpdatedAt(Instant.now());
             // Validation métier
-            String title = (String) listing.getTitle();
+            String title = listing.getTitle();
             if (title == null || title.length() < 5 || title.length() > 200) {
                 throw new IllegalArgumentException("Le titre doit contenir entre 5 et 200 caractères");
             }

@@ -5,6 +5,8 @@ import com.opossum.user.UserRepository;
 import java.util.List;
 import com.opossum.listings.dto.UpdateListingsRequest;
 import java.util.UUID;
+import com.opossum.listings.Listings;
+import com.opossum.listings.ListingsService;
 
 
 @RestController
@@ -22,14 +24,15 @@ public class ListingsController {
 
     @PostMapping("/create")
     public ResponseEntity<?> create(
-            @RequestBody Listings listings,
+            @RequestBody com.opossum.listings.dto.CreateListingsRequest req,
             java.security.Principal principal
     ) {
         String email = principal.getName();
         com.opossum.user.User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
         try {
-            java.util.Map<String, Object> response = ListingsService.createListingAndBuildResponse(listings, user);
+            Listings listing = ListingsService.mapCreateRequestToEntity(req);
+            java.util.Map<String, Object> response = ListingsService.createListingAndBuildResponse(listing, user);
             return ResponseEntity.status(201).body(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(validationError("validation", ex.getMessage()));
