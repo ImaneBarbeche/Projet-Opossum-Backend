@@ -87,16 +87,36 @@ public class ListingsController {
         }
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<Listings>> search(@RequestParam String title) {
-        return ResponseEntity.ok(ListingsService.searchListings(title));
+
+    // Recherche avancée avec filtres multiples et pagination
+    @GetMapping("/advanced-search")
+    public ResponseEntity<?> advancedSearch(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
+            @RequestParam(required = false, defaultValue = "10") Double radius,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false, defaultValue = "relevance") String sortBy,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        // Délégation au service, qui gère la recherche avancée et le formatage de la réponse
+        java.util.Map<String, Object> response = ListingsService.advancedSearch(q, type, category, city, latitude, longitude, radius, dateFrom, dateTo, sortBy, page, size);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Listings> getListingById(@PathVariable UUID id) {
-        return ListingsService.getListingById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<?> getListingDetails(@PathVariable UUID id, java.security.Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        java.util.Map<String, Object> response = ListingsService.getListingDetails(id, email);
+        if (Boolean.FALSE.equals(response.get("success"))) {
+            return ResponseEntity.status(404).body(response);
+        }
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")

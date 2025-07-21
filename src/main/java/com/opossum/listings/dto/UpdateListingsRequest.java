@@ -8,13 +8,12 @@ public class UpdateListingsRequest {
     private String description;
     private boolean isLost;
     private UUID userId;
-
-
     private String category;
     private String status;
 
     public UpdateListingsRequest() {
-    }
+    } 
+
     public String getCategory() {
         return category;
     }

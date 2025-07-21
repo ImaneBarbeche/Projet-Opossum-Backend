@@ -1,6 +1,5 @@
 
 package com.opossum.listings;
-
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -110,7 +109,17 @@ public class Listings {
     public String getStatus() {
         return status;
     }
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
 
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
     // setters
     public void setId(UUID id) {
         this.id = id;
@@ -162,7 +171,4 @@ public class Listings {
     public boolean getIsLost() {
         return isLost;
     }
-
-     
-
 }
