@@ -14,14 +14,13 @@ public class ListingsDto {
     private Double latitude;
     private Double longitude;
     private String address;
+    private String city;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant resolvedAt;
     private UUID userId;
 
-    private String city;
-
-    public ListingsDto(UUID id, String title, String description, String type, String category, String status, Double latitude, Double longitude, String address, Instant createdAt, Instant updatedAt, Instant resolvedAt, UUID userId, String city) {
+    public ListingsDto(UUID id, String title, String description, String type, String category, String status, Double latitude, Double longitude, String address, String city, Instant createdAt, Instant updatedAt, Instant resolvedAt, UUID userId) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -31,33 +30,11 @@ public class ListingsDto {
         this.latitude = latitude;
         this.longitude = longitude;
         this.address = address;
+        this.city = city;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.resolvedAt = resolvedAt;
         this.userId = userId;
-        this.city = city;
-    }
-    created_at timestamp[
-    not null, default: `CURRENT_TIMESTAMP
-    `]
-updated_at timestamp[
-    default: `CURRENT_TIMESTAMP
-    `]
-resolved_at timestamp // plusieurs listings pour 1 user
-
-    user_id uuid[
-    not
-
-    null]
-
-    public ListingsDto(UUID id, String title, String description, boolean isLost, UUID userId, Instant createdAt, Instant updatedAt) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.isLost = isLost;
-        this.userId = userId;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     public UUID getId() {
@@ -72,12 +49,32 @@ resolved_at timestamp // plusieurs listings pour 1 user
         return description;
     }
 
-    public boolean isLost() {
-        return isLost;
+    public String getType() {
+        return type;
     }
 
-    public UUID getUserId() {
-        return userId;
+    public String getCategory() {
+        return category;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getCity() {
+        return city;
     }
 
     public Instant getCreatedAt() {
@@ -86,5 +83,13 @@ resolved_at timestamp // plusieurs listings pour 1 user
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public Instant getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public UUID getUserId() {
+        return userId;
     }
 }

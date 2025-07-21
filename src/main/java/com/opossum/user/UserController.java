@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.opossum.user.dto.UpdatePasswordRequest;
 import com.opossum.user.dto.UpdateProfileRequest;
-import com.opossum.user.dto.UserDto;
+import com.opossum.user.dto.UserProfileResponse;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -43,20 +43,14 @@ public class UserController {
         }
 
         return ResponseEntity.ok(
-                new UserDto(
+                new UserProfileResponse(
                         user.getId(),
                         user.getFirstName(),
                         user.getLastName(),
                         user.getEmail(),
                         user.getPhone(),
                         user.getAvatar(),
-                        user.getRole(),
-                        user.isActive(),
-                        user.isEmailVerified(),
-                        user.getCreatedAt(),
-                        user.getUpdatedAt(),
-                        user.getLastLoginAt()
-                )
+                        user.getRole().toString())
         );
     }
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.opossum.user.dto.UpdateProfileRequest;
+import com.opossum.user.dto.UserDto;
 import com.opossum.user.dto.UserProfileResponse;
 
 @Service
@@ -91,17 +92,6 @@ public class UserService {
     }
 
     public UserProfileResponse mapToDto(User user) {
-        if (user == null) {
-            return null;
-        }
-
-        return new UserProfileResponse(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getPhone(),
-                user.getRole()
-        );
+        return new UserProfileResponse(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhone(), user.getAvatar(), user.getRole().name());
     }
 }

@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 
+import com.opossum.common.enums.Role;
+
 /**
  * Entité représentant un utilisateur de l'application OPOSSUM.
  */
@@ -39,8 +41,9 @@ public class User implements UserDetails {
     @Column(length = 500)
     private String avatar;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private Role role;
 
     private boolean isActive = true;
 
@@ -63,6 +66,7 @@ public class User implements UserDetails {
     public UUID getId() {
         return id;
     }
+
     public void setId(UUID id) {
         this.id = id;
     }
@@ -70,6 +74,7 @@ public class User implements UserDetails {
     public String getEmail() {
         return email;
     }
+
     public void setEmail(String email) {
         this.email = email;
     }
@@ -77,6 +82,7 @@ public class User implements UserDetails {
     public String getPasswordHash() {
         return passwordHash;
     }
+
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
@@ -84,6 +90,7 @@ public class User implements UserDetails {
     public String getFirstName() {
         return firstName;
     }
+
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
@@ -91,6 +98,7 @@ public class User implements UserDetails {
     public String getLastName() {
         return lastName;
     }
+
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
@@ -98,6 +106,7 @@ public class User implements UserDetails {
     public String getPhone() {
         return phone;
     }
+
     public void setPhone(String phone) {
         this.phone = phone;
     }
@@ -105,20 +114,23 @@ public class User implements UserDetails {
     public String getAvatar() {
         return avatar;
     }
+
     public void setAvatar(String avatar) {
         this.avatar = avatar;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
-    public void setRole(String role) {
+
+    public void setRole(Role role) {
         this.role = role;
     }
 
     public boolean isActive() {
         return isActive;
     }
+
     public void setActive(boolean active) {
         isActive = active;
     }
@@ -126,6 +138,7 @@ public class User implements UserDetails {
     public boolean isEmailVerified() {
         return isEmailVerified;
     }
+
     public void setEmailVerified(boolean emailVerified) {
         isEmailVerified = emailVerified;
     }
@@ -133,6 +146,7 @@ public class User implements UserDetails {
     public String getEmailVerificationToken() {
         return emailVerificationToken;
     }
+
     public void setEmailVerificationToken(String emailVerificationToken) {
         this.emailVerificationToken = emailVerificationToken;
     }
@@ -140,6 +154,7 @@ public class User implements UserDetails {
     public String getPasswordResetToken() {
         return passwordResetToken;
     }
+
     public void setPasswordResetToken(String passwordResetToken) {
         this.passwordResetToken = passwordResetToken;
     }
@@ -147,6 +162,7 @@ public class User implements UserDetails {
     public Instant getPasswordResetExpiresAt() {
         return passwordResetExpiresAt;
     }
+
     public void setPasswordResetExpiresAt(Instant passwordResetExpiresAt) {
         this.passwordResetExpiresAt = passwordResetExpiresAt;
     }
@@ -154,6 +170,7 @@ public class User implements UserDetails {
     public Instant getCreatedAt() {
         return createdAt;
     }
+
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
@@ -161,6 +178,7 @@ public class User implements UserDetails {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
@@ -168,6 +186,7 @@ public class User implements UserDetails {
     public Instant getLastLoginAt() {
         return lastLoginAt;
     }
+
     public void setLastLoginAt(Instant lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
     }
@@ -175,7 +194,7 @@ public class User implements UserDetails {
     // === Implémentation UserDetails (Spring Security) ===
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override
@@ -201,10 +220,5 @@ public class User implements UserDetails {
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return isActive;
     }
 }

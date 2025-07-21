@@ -9,7 +9,7 @@ import java.util.UUID;
 public class Listings {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, length = 200)
@@ -19,16 +19,43 @@ public class Listings {
     private String description;
 
     @Column(nullable = false)
-    private boolean isLost;
+    @Enumerated(EnumType.STRING)
+    private ListingType type;
 
     @Column(nullable = false)
-    private UUID userId;
+    private String category;
 
     @Column(nullable = false)
+    private String status;
+
+    @Column(nullable = false)
+    private Double latitude;
+
+    @Column(nullable = false)
+    private Double longitude;
+
+    @Column(nullable = false)
+    private String address;
+
+    @Column(nullable = false)
+    private String city;
+
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @Column
+    private Instant resolvedAt;
+
+    @Column(nullable = false)
+    private UUID userId;
+
+    public enum ListingType {
+        LOST,
+        FOUND
+    }
 
     public Listings() {
     }
@@ -46,12 +73,32 @@ public class Listings {
         return description;
     }
 
-    public boolean getIsLost() {
-        return isLost;
+    public ListingType getType() {
+        return type;
     }
 
-    public UUID getUserId() {
-        return userId;
+    public String getCategory() {
+        return category;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getCity() {
+        return city;
     }
 
     public Instant getCreatedAt() {
@@ -60,6 +107,14 @@ public class Listings {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public Instant getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public UUID getUserId() {
+        return userId;
     }
 
     // setters
@@ -75,19 +130,46 @@ public class Listings {
         this.description = description;
     }
 
-    public void setIsLost(boolean isLost) {
-        this.isLost = isLost;
+    public void setType(ListingType type) {
+        if (type != ListingType.LOST && type != ListingType.FOUND) {
+            throw new IllegalArgumentException("Invalid type");
+        }
+        this.type = type;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public void setCategory(String category) {
+        this.category = category;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 }
