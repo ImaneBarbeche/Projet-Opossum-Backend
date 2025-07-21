@@ -2,6 +2,7 @@ package com.opossum.auth;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -99,13 +100,14 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setPhone(request.getPhone());
-        user.setRole("USER");
+        user.setAvatar(request.getAvatar());
+        user.setRole(com.opossum.user.Role.USER);
         user.setActive(true);
         user.setCreatedAt(Instant.now());
 
         user.setEmailVerificationToken(UUID.randomUUID().toString());
         user.setEmailVerified(false); // 🟢 Email non vérifié au moment de l'inscription
-
+        user.setEmailVerificationExpiresAt(Instant.now().plus(24, ChronoUnit.HOURS));
 
         userRepository.save(user);
         emailService.sendVerificationEmail(user.getEmail(), user.getEmailVerificationToken());
@@ -125,7 +127,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getRole(),
+                user.getRole() != null ? user.getRole().name() : null,
                 accessToken,
                 refreshToken,
                 1800, // expiresIn: 30 minutes

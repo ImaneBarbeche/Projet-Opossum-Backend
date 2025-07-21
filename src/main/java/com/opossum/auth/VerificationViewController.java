@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Controller
@@ -27,8 +28,15 @@ public class VerificationViewController {
         }
 
         User user = optionalUser.get();
+
+        // Vérification expiration
+        if (user.getEmailVerificationExpiresAt() == null || user.getEmailVerificationExpiresAt().isBefore(Instant.now())) {
+            return "verification-error";
+        }
+
         user.setIsEmailVerified(true);
         user.setEmailVerificationToken(null);
+        user.setEmailVerificationExpiresAt(null);
         userRepository.save(user);
 
         return "verification-success";

@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
-import com.opossum.user.Role;
 
 /**
  * Entité représentant un utilisateur de l'application OPOSSUM.
@@ -53,6 +52,9 @@ public class User implements UserDetails {
 
     @Column(name = "email_verification_token")
     private String emailVerificationToken;
+
+    @Column(name = "email_verification_expires_at")
+    private Instant emailVerificationExpiresAt;
 
     @Column(name = "password_reset_token")
     private String passwordResetToken;
@@ -157,6 +159,14 @@ public class User implements UserDetails {
 
     public void setEmailVerificationToken(String emailVerificationToken) {
         this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public Instant getEmailVerificationExpiresAt() {
+        return emailVerificationExpiresAt;
+    }
+
+    public void setEmailVerificationExpiresAt(Instant emailVerificationExpiresAt) {
+        this.emailVerificationExpiresAt = emailVerificationExpiresAt;
     }
 
     public String getPasswordResetToken() {

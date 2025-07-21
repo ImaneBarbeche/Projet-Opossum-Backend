@@ -58,9 +58,89 @@ public class AuthController {
      * Retourne les tokens JWT si succès
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         System.out.println(">>> Reçu : " + request.getEmail() + " / " + request.getPassword());
-        return ResponseEntity.ok(authService.login(request));
+        try {
+            AuthResponse response = authService.login(request);
+            // Mettre à jour lastLoginAt
+            Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+            userOpt.ifPresent(user -> {
+                user.setLastLoginAt(java.time.Instant.now());
+                userRepository.save(user);
+            });
+            // Structure de réponse conforme à la spec
+            java.util.Map<String, Object> userMap = new java.util.HashMap<>();
+            userMap.put("id", response.getId());
+            userMap.put("email", response.getEmail());
+            userMap.put("firstName", response.getFirstName());
+            userMap.put("lastName", response.getLastName());
+            userMap.put("avatar", userOpt.map(User::getAvatar).orElse(null));
+            userMap.put("role", response.getRole());
+
+            java.util.Map<String, Object> tokensMap = new java.util.HashMap<>();
+            tokensMap.put("accessToken", response.getAccessToken());
+            tokensMap.put("refreshToken", response.getRefreshToken());
+            tokensMap.put("expiresIn", response.getExpiresIn());
+
+            java.util.Map<String, Object> data = java.util.Map.of(
+                "user", userMap,
+                "tokens", tokensMap
+            );
+
+            return ResponseEntity.ok(
+                java.util.Map.of(
+                    "success", true,
+                    "data", data,
+                    "message", "Connexion réussie",
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            if (e.getStatusCode() == org.springframework.http.HttpStatus.CONFLICT) {
+                return ResponseEntity.status(401).body(
+                    java.util.Map.of(
+                        "success", false,
+                        "error", java.util.Map.of(
+                            "code", "INVALID_CREDENTIALS",
+                            "message", "Email ou mot de passe incorrect"
+                        ),
+                        "timestamp", java.time.Instant.now()
+                    )
+                );
+            }
+            return ResponseEntity.status(e.getStatusCode()).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "INTERNAL_ERROR",
+                        "message", e.getReason() != null ? e.getReason() : "Erreur lors de la connexion"
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (com.opossum.common.exceptions.UnauthorizedException e) {
+            return ResponseEntity.status(401).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "INVALID_CREDENTIALS",
+                        "message", e.getMessage()
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "INTERNAL_ERROR",
+                        "message", "Erreur lors de la connexion: " + ex.getMessage()
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        }
     }
 
     /**
@@ -68,38 +148,166 @@ public class AuthController {
      * Retourne les tokens JWT + user info
      */
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         System.out.println(">>> Reçu REGISTER: " + request.getEmail() + " / " + request.getPassword());
 
-        AuthResponse response = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response); // 201 Created
+        try {
+            AuthResponse response = authService.register(request);
+            // Enveloppe la réponse selon la spec
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("id", response.getId());
+            data.put("email", response.getEmail());
+            data.put("firstName", response.getFirstName());
+            data.put("lastName", response.getLastName());
+            data.put("avatar", request.getAvatar());
+            data.put("isEmailVerified", false);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                java.util.Map.of(
+                    "success", true,
+                    "data", data,
+                    "message", "Compte créé avec succès. Vérifiez votre email.",
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            // Gestion des erreurs de validation (email déjà utilisé, etc)
+            return ResponseEntity.status(e.getStatusCode()).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", e.getStatusCode() == HttpStatus.CONFLICT ? "VALIDATION_ERROR" : "INTERNAL_ERROR",
+                        "message", e.getReason() != null ? e.getReason() : "Erreur lors de la création du compte"
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "INTERNAL_ERROR",
+                        "message", "Erreur lors de la création du compte: " + ex.getMessage()
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        }
     }
 
-    @PostMapping("/refresh-token")
-    public AuthResponse refreshToken(@RequestBody RefreshTokenRequest request) {
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
         if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
-            throw new UnauthorizedException("Le champ 'refreshToken' est requis dans le body.");
+            return ResponseEntity.status(401).body(
+                Map.of(
+                    "success", false,
+                    "error", Map.of(
+                        "code", "INVALID_REFRESH_TOKEN",
+                        "message", "Le champ 'refreshToken' est requis dans le body."
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
         }
-
-        return authService.refreshToken(request.getRefreshToken());
+        try {
+            AuthResponse response = authService.refreshToken(request.getRefreshToken());
+            Map<String, Object> data = Map.of(
+                "accessToken", response.getAccessToken(),
+                "refreshToken", response.getRefreshToken(),
+                "expiresIn", response.getExpiresIn()
+            );
+            return ResponseEntity.ok(
+                Map.of(
+                    "success", true,
+                    "data", data,
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (UnauthorizedException | org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(401).body(
+                Map.of(
+                    "success", false,
+                    "error", Map.of(
+                        "code", "INVALID_REFRESH_TOKEN",
+                        "message", e.getMessage() != null ? e.getMessage() : "Refresh token invalide ou expiré"
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                Map.of(
+                    "success", false,
+                    "error", Map.of(
+                        "code", "INTERNAL_ERROR",
+                        "message", "Erreur lors du refresh token: " + e.getMessage()
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        }
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
-        authService.forgotPassword(request.getEmail());
+    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        String email = request.getEmail();
         Map<String, Object> response = new HashMap<>();
+        // Validation du format d'email
+        if (email == null || email.isBlank() || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            response.put("success", false);
+            response.put("error", Map.of(
+                "code", "INVALID_EMAIL",
+                "message", "Format d'email invalide"
+            ));
+            response.put("timestamp", java.time.Instant.now());
+            return ResponseEntity.status(400).body(response);
+        }
+        // Appel du service (gère la logique et la sécurité)
+        authService.forgotPassword(email);
         response.put("success", true);
-        response.put("message", "Si un compte existe, un email de réinitialisation a été envoyé.");
+        response.put("message", "Email de réinitialisation envoyé");
+        response.put("timestamp", java.time.Instant.now());
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<java.util.Map<String, Object>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
-        authService.resetPassword(request.getToken(), request.getNewPassword());
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
-        response.put("success", true);
-        response.put("message", "Mot de passe réinitialisé avec succès.");
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody ResetPasswordRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        String token = request.getToken();
+        String newPassword = request.getNewPassword();
+        // Validation du mot de passe
+        if (newPassword == null || newPassword.length() < 8) {
+            response.put("success", false);
+            response.put("error", Map.of(
+                "code", "INVALID_PASSWORD",
+                "message", "Le mot de passe doit contenir au moins 8 caractères"
+            ));
+            response.put("timestamp", java.time.Instant.now());
+            return ResponseEntity.status(400).body(response);
+        }
+        try {
+            authService.resetPassword(token, newPassword);
+            response.put("success", true);
+            response.put("message", "Mot de passe réinitialisé avec succès");
+            response.put("timestamp", java.time.Instant.now());
+            return ResponseEntity.ok(response);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            response.put("success", false);
+            response.put("error", Map.of(
+                "code", "INVALID_OR_EXPIRED_TOKEN",
+                "message", "Le lien de réinitialisation est invalide ou expiré"
+            ));
+            response.put("timestamp", java.time.Instant.now());
+            return ResponseEntity.status(400).body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", Map.of(
+                "code", "INTERNAL_ERROR",
+                "message", "Erreur lors de la réinitialisation: " + e.getMessage()
+            ));
+            response.put("timestamp", java.time.Instant.now());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
     @GetMapping("/verify-email")
