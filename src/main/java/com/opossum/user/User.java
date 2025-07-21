@@ -37,7 +37,7 @@ public class User implements UserDetails {
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "avatar", length = 500) // Gardé comme dans la version principale
+    @Column(name = "avatar", length = 500) 
     private String avatar;
 
     @Column(name = "role", nullable = false)
@@ -47,7 +47,7 @@ public class User implements UserDetails {
     private boolean isActive = true;
 
     @Column(name = "is_email_verified")
-    private boolean isEmailVerified = false;
+    private boolean isEmailVerified; // rejouter = false pour que l'email ne soit pas vérifié par defaut
 
     @Column(name = "email_verification_token")
     private String emailVerificationToken;

@@ -1,13 +1,9 @@
 package com.opossum.auth;
 
-import com.opossum.auth.dto.AuthResponse;
-import com.opossum.auth.dto.LoginRequest;
-import com.opossum.auth.dto.RegisterRequest;
-import com.opossum.common.exceptions.UnauthorizedException;
-import com.opossum.token.RefreshTokenService;
-import com.opossum.user.User;
-import com.opossum.user.UserRepository;
-import jakarta.transaction.Transactional;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,10 +11,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
-import java.time.Duration;
-import java.util.Optional;
-import java.util.UUID;
+import com.opossum.auth.dto.AuthResponse;
+import com.opossum.auth.dto.LoginRequest;
+import com.opossum.auth.dto.RegisterRequest;
+import com.opossum.common.exceptions.UnauthorizedException;
+import com.opossum.token.RefreshTokenService;
+import com.opossum.user.User;
+import com.opossum.user.UserRepository;
+
+import jakarta.transaction.Transactional;
 
 /**
  * Service métier responsable de la logique d'authentification.
@@ -100,11 +101,11 @@ public class AuthService {
         user.setPhone(request.getPhone());
         user.setRole("USER");
         user.setActive(true);
-        user.setEmailVerified(false);
         user.setCreatedAt(Instant.now());
 
         user.setEmailVerificationToken(UUID.randomUUID().toString());
-        user.setIsEmailVerified(false); // Facultatif, mais explicite
+        user.setEmailVerified(false); // 🟢 Email non vérifié au moment de l'inscription
+
 
         userRepository.save(user);
         emailService.sendVerificationEmail(user.getEmail(), user.getEmailVerificationToken());

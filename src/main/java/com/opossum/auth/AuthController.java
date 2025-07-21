@@ -1,6 +1,8 @@
 package com.opossum.auth;
+
 import com.opossum.auth.dto.AuthResponse;
 import com.opossum.auth.dto.LoginRequest;
+import com.opossum.auth.dto.RefreshTokenRequest;
 import com.opossum.auth.dto.RegisterRequest;
 import com.opossum.common.exceptions.UnauthorizedException;
 import com.opossum.user.User;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.opossum.auth.dto.ForgotPasswordRequest;
 import com.opossum.auth.dto.ResetPasswordRequest;
+
 /**
  * Contrôleur REST pour gérer l'authentification : - Inscription (register) -
  * Connexion (login)
@@ -53,51 +56,47 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-          System.out.println(">>> Reçu REGISTER: " + request.getEmail() + " / " + request.getPassword());
-          
+        System.out.println(">>> Reçu REGISTER: " + request.getEmail() + " / " + request.getPassword());
+
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response); // 201 Created
     }
 
     @PostMapping("/refresh-token")
-public ResponseEntity<AuthResponse> refreshToken(HttpServletRequest request) {
-    String authHeader = request.getHeader("Authorization");
+    public AuthResponse refreshToken(@RequestBody RefreshTokenRequest request) {
+        if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw new UnauthorizedException("Le champ 'refreshToken' est requis dans le body.");
+        }
 
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        throw new UnauthorizedException("Token manquant");
+        return authService.refreshToken(request.getRefreshToken());
     }
 
-    String refreshToken = authHeader.substring(7);
-    AuthResponse response = authService.refreshToken(refreshToken);
-    return ResponseEntity.ok(response);
-}
-
-@PostMapping("/forgot-password")
-public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
-    authService.forgotPassword(request.getEmail());
-    return ResponseEntity.ok().build();
-}
-
-@PostMapping("/reset-password")
-public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
-    authService.resetPassword(request.getToken(), request.getNewPassword());
-    return ResponseEntity.ok().build();
-}
-
-@GetMapping("/verify-email")
-public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
-    Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
-
-    if (optionalUser.isEmpty()) {
-        return ResponseEntity.badRequest().body("Lien de vérification invalide ou expiré.");
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok().build();
     }
 
-    User user = optionalUser.get();
-    user.setIsEmailVerified(true);
-    user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
-    userRepository.save(user);
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok().build();
+    }
 
-    return ResponseEntity.ok("Email vérifié avec succès !");
-}
+    @GetMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
+        Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.badRequest().body("Lien de vérification invalide ou expiré.");
+        }
+
+        User user = optionalUser.get();
+        user.setIsEmailVerified(true);
+        user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Email vérifié avec succès !");
+    }
 
 }

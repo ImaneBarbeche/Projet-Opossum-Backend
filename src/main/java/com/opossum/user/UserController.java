@@ -70,6 +70,25 @@ public void init() {
         );
     }
 
+@PutMapping("/me")
+public ResponseEntity<String> updateMyProfile(@AuthenticationPrincipal User user,
+                                              @Valid @RequestBody UpdateProfileRequest request) {
+    if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non connecté.");
+    }
+
+    user.setFirstName(request.getFirstName());
+    user.setLastName(request.getLastName());
+    user.setPhone(request.getPhone());
+    user.setAvatar(request.getAvatar());
+
+    userRepository.save(user);
+
+    return ResponseEntity.ok("✅ Profil mis à jour avec succès !");
+}
+
+
+
     @PutMapping("/edit-password")
     public ResponseEntity<UserDto> editPassword(@PathVariable UUID id, @RequestBody String newPassword) {
         Optional<User> userOptional = userService.editPassword(id, newPassword);
