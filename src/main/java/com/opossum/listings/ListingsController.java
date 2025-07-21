@@ -3,7 +3,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.opossum.user.UserRepository;
 import java.util.List;
-import java.util.Optional;
 import com.opossum.listings.dto.UpdateListingsRequest;
 import java.util.UUID;
 
@@ -74,9 +73,18 @@ public class ListingsController {
     }
 
     @DeleteMapping("/{id}/delete")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        ListingsService.deleteListing(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable UUID id, java.security.Principal principal) {
+        String email = principal.getName();
+        com.opossum.user.User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        try {
+            java.util.Map<String, Object> response = ListingsService.deleteListingAndBuildResponse(id, user);
+            return ResponseEntity.ok(response);
+        } catch (com.opossum.listings.common.exceptions.ForbiddenException ex) {
+            return ResponseEntity.status(403).body(ex.getErrorBody());
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(404).body(validationError("not_found", ex.getMessage()));
+        }
     }
 
     @GetMapping("/search")

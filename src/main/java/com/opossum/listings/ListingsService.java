@@ -2,8 +2,6 @@
 package com.opossum.listings;
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
-import com.opossum.listings.Listings;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -183,8 +181,28 @@ public class ListingsService {
         return response;
     }
 
-    public void deleteListing(UUID id) {
+    public java.util.Map<String, Object> deleteListingAndBuildResponse(UUID id, com.opossum.user.User user) {
+        Listings listing = listingsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
+        // Vérification auteur ou admin (enum, champ unique)
+        boolean isAdmin = user.getRole() == com.opossum.user.Role.ADMIN;
+        if (!listing.getUserId().equals(user.getId()) && !isAdmin) {
+            java.util.Map<String, Object> error = new java.util.HashMap<>();
+            error.put("success", false);
+            java.util.Map<String, Object> err = new java.util.HashMap<>();
+            err.put("code", "ACCESS_DENIED");
+            err.put("message", "Vous ne pouvez supprimer que vos propres annonces");
+            error.put("error", err);
+            error.put("timestamp", java.time.Instant.now().toString());
+            throw new com.opossum.listings.common.exceptions.ForbiddenException(error);
+        }
+        // TODO: supprimer les messages liés à l'annonce si besoin
         listingsRepository.deleteById(id);
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "Annonce supprimée avec succès");
+        response.put("timestamp", java.time.Instant.now().toString());
+        return response;
     }
 
     public List<Listings> searchListings(String title) {

@@ -10,8 +10,6 @@ import com.opossum.user.UserRepository;
 import com.opossum.token.RefreshTokenService;
 import com.opossum.token.RefreshTokenRepository;
 import com.opossum.token.RefreshToken;
-
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import java.util.Optional;
@@ -19,14 +17,11 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.opossum.auth.dto.ForgotPasswordRequest;
 import java.util.HashMap;
-import java.util.Map;
 import com.opossum.auth.dto.ResetPasswordRequest;
-import com.opossum.token.RefreshTokenService;
 
 /**
  * Contrôleur REST pour gérer l'authentification : - Inscription (register) -
