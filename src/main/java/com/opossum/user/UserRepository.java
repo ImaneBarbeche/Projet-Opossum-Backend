@@ -13,7 +13,7 @@ import java.util.UUID;
  * automatiquement des méthodes CRUD de JpaRepository.
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, UUID>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<User> {
 
     @Query("SELECT u FROM User u WHERE u.emailVerificationToken = :token")
     Optional<User> findByEmailVerificationToken(@Param("token") String token);

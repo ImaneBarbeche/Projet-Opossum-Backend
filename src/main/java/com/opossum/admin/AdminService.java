@@ -2,13 +2,23 @@
 package com.opossum.admin;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import com.opossum.listings.ListingsRepository;
+import java.util.UUID;
 import java.util.Map;
 import java.util.List;
 
 @Service
 public class AdminService {
-    // Logique métier admin à ajouter ici
+    private final com.opossum.user.UserRepository userRepository;
+    private final ListingsRepository listingsRepository;
+
+    @Autowired
+    public AdminService(com.opossum.user.UserRepository userRepository, ListingsRepository listingsRepository) {
+        this.userRepository = userRepository;
+        this.listingsRepository = listingsRepository;
+    }
 
     public ResponseEntity<?> getGlobalStats() {
         // Statistiques mockées pour l'exemple
@@ -47,26 +57,56 @@ public class AdminService {
     }
 
     public ResponseEntity<?> getAllUsers(String search, String status, int page, int size, String sort) {
-        // Exemple de données utilisateur mockées (HashMap pour plus de 10 paires)
-        java.util.Map<String, Object> user = new java.util.HashMap<>();
-        user.put("id", "550e8400-e29b-41d4-a716-446655440001");
-        user.put("email", "marie.dupont@example.com");
-        user.put("firstName", "Marie");
-        user.put("lastName", "Dupont");
-        user.put("phone", "+33123456789");
-        user.put("status", status != null ? status : "ACTIVE");
-        user.put("role", "USER");
-        user.put("createdAt", "2025-07-01T10:30:00Z");
-        user.put("lastLoginAt", "2025-07-09T08:00:00Z");
-        user.put("announcementCount", 3);
-        user.put("conversationCount", 5);
+        // Pagination et tri
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sort.replace(",", " ").split(" ")));
 
-        java.util.List<java.util.Map<String, Object>> content = java.util.List.of(user);
+        // Recherche et filtrage dynamique
+        org.springframework.data.jpa.domain.Specification<com.opossum.user.User> spec = (root, query, cb) -> {
+            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            if (search != null && !search.isEmpty()) {
+                String like = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("firstName")), like),
+                        cb.like(cb.lower(root.get("lastName")), like),
+                        cb.like(cb.lower(root.get("email")), like)
+                ));
+            }
+            if (status != null) {
+                if (status.equalsIgnoreCase("ACTIVE")) predicates.add(cb.isTrue(root.get("isActive")));
+                else if (status.equalsIgnoreCase("BLOCKED")) predicates.add(cb.isFalse(root.get("isActive")));
+                // Ajout d'autres statuts si besoin
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        org.springframework.data.domain.Page<com.opossum.user.User> userPage =
+            userRepository.findAll(spec, pageable);
+
+        java.util.List<java.util.Map<String, Object>> content = new java.util.ArrayList<>();
+        for (com.opossum.user.User user : userPage.getContent()) {
+            java.util.Map<String, Object> u = new java.util.HashMap<>();
+            u.put("id", user.getId().toString());
+            u.put("email", user.getEmail());
+            u.put("firstName", user.getFirstName());
+            u.put("lastName", user.getLastName());
+            u.put("phone", user.getPhone());
+            u.put("status", user.isActive() ? "ACTIVE" : "BLOCKED");
+            u.put("role", user.getRole());
+            u.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+            u.put("lastLoginAt", user.getLastLoginAt() != null ? user.getLastLoginAt().toString() : null);
+            // Compte le nombre d'annonces pour l'utilisateur
+            int announcementCount = listingsRepository.findByUserId(user.getId()).size();
+            u.put("announcementCount", announcementCount);
+            // conversationCount à implémenter plus tard
+            u.put("conversationCount", 0);
+            content.add(u);
+        }
+
         java.util.Map<String, Object> pageInfo = java.util.Map.of(
-                "number", page,
-                "size", size,
-                "totalElements", 1,
-                "totalPages", 1
+                "number", userPage.getNumber(),
+                "size", userPage.getSize(),
+                "totalElements", userPage.getTotalElements(),
+                "totalPages", userPage.getTotalPages()
         );
         java.util.Map<String, Object> data = java.util.Map.of(
                 "content", content,
@@ -81,19 +121,28 @@ public class AdminService {
     }
 
     public ResponseEntity<?> blockUser(String userId, BlockUserRequest request) {
-        // Simule le blocage d'un utilisateur
         String now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString();
-        String unblockAt = null;
-        if (request.duration != null) {
-            java.time.ZonedDateTime unblockDate = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).plusDays(request.duration);
-            unblockAt = unblockDate.toString();
+        java.util.Optional<com.opossum.user.User> userOpt = userRepository.findById(java.util.UUID.fromString(userId));
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of(
+                "success", false,
+                "error", java.util.Map.of(
+                    "code", "USER_NOT_FOUND",
+                    "message", "Utilisateur introuvable"
+                ),
+                "timestamp", now
+            ));
         }
+        com.opossum.user.User user = userOpt.get();
+        user.setActive(false);
+        userRepository.save(user);
+
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("userId", userId);
         data.put("status", "BLOCKED");
         data.put("blockedAt", now);
         data.put("blockReason", request.reason);
-        if (unblockAt != null) data.put("unblockAt", unblockAt);
+        // Optionnel: gérer la durée de blocage (champ à ajouter si besoin)
 
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("success", true);
@@ -104,6 +153,18 @@ public class AdminService {
     }
     public ResponseEntity<?> deleteUser(String userId) {
         String now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString();
+        java.util.Optional<com.opossum.user.User> userOpt = userRepository.findById(java.util.UUID.fromString(userId));
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of(
+                "success", false,
+                "error", java.util.Map.of(
+                    "code", "USER_NOT_FOUND",
+                    "message", "Utilisateur introuvable"
+                ),
+                "timestamp", now
+            ));
+        }
+        userRepository.deleteById(java.util.UUID.fromString(userId));
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("success", true);
         response.put("message", "Compte utilisateur supprimé définitivement");
