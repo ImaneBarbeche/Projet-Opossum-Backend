@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Optional;
 import com.opossum.user.dto.UpdatePasswordRequest;
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
@@ -58,19 +57,10 @@ public class UserController {
                 )
         );
     }
-
-    @PutMapping("/edit-password")
-    public ResponseEntity<UserDto> editPassword(@PathVariable UUID id, @RequestBody String newPassword) {
-        Optional<User> userOptional = userService.editPassword(id, newPassword);
-        return userOptional.map(userService::mapToDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     /**
      * Mettre à jour son profil (prénom, nom, téléphone)
      */
-    @PutMapping("/edit")
+    @PutMapping("/update-profile")
     public ResponseEntity<User> updateProfile(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody UpdateProfileRequest request
@@ -87,7 +77,7 @@ public class UserController {
     /**
      * Changer son mot de passe
      */
-    @PutMapping("/me/password")
+    @PutMapping("/update-password")
     public ResponseEntity<Void> updatePassword(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody UpdatePasswordRequest request
@@ -102,7 +92,7 @@ public class UserController {
     /**
      * Supprimer son propre compte
      */
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete-profile")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
