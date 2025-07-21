@@ -30,4 +30,19 @@ public class EmailService {
 
         mailSender.send(message);
     }
+        public void sendResetPasswordEmail(String toEmail, String token) {
+        String resetUrl = "http://192.168.1.225:8080/reset-password.html?token=" + token;
+        String subject = "Réinitialisation de votre mot de passe";
+        String text = "Bonjour,\n\nPour réinitialiser votre mot de passe, cliquez sur ce lien :\n" + resetUrl +
+            "\n\nSi le lien ne fonctionne pas, copiez ce code dans l'application :\n" + token +
+            "\n\nCe lien et ce code sont valables 30 minutes.\n\nL'équipe Opossum.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
+    }
 }

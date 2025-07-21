@@ -21,6 +21,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.opossum.auth.dto.ForgotPasswordRequest;
+import java.util.HashMap;
+import java.util.Map;
 import com.opossum.auth.dto.ResetPasswordRequest;
 import com.opossum.token.RefreshTokenService;
 
@@ -79,9 +81,12 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
         authService.forgotPassword(request.getEmail());
-        return ResponseEntity.ok().build();
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Si un compte existe, un email de réinitialisation a été envoyé.");
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")

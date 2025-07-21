@@ -159,10 +159,8 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // 4. Afficher un faux lien de réinitialisation (à remplacer par envoi email plus tard)
-        System.out.println("[🔐 MOT DE PASSE OUBLIÉ]");
-        System.out.println("→ Lien de réinitialisation : https://opossum.app/reset-password?token=" + resetToken);
-        System.out.println("→ Ce lien est valable jusqu’à : " + expiresAt);
+        // 4. Envoyer le lien de réinitialisation par email
+        emailService.sendResetPasswordEmail(user.getEmail(), resetToken);
     }
 
     public void resetPassword(String token, String newPassword) {
@@ -170,7 +168,7 @@ public class AuthService {
         Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
 
         if (optionalUser.isEmpty()) {
-            throw new IllegalArgumentException("Token invalide.");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Token invalide.");
         }
 
         User user = optionalUser.get();
@@ -180,7 +178,7 @@ public class AuthService {
         Instant expiresAt = user.getPasswordResetExpiresAt();
 
         if (expiresAt == null || expiresAt.isBefore(now)) {
-            throw new IllegalArgumentException("Le lien de réinitialisation a expiré.");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Le lien de réinitialisation a expiré.");
         }
 
         // 3. Hacher le nouveau mot de passe
@@ -194,7 +192,7 @@ public class AuthService {
         // 5. Sauvegarder
         userRepository.save(user);
 
-        System.out.println("[✅ MOT DE PASSE MIS À JOUR POUR : " + user.getEmail() + "]");
+        // Mot de passe mis à jour, aucune sortie console nécessaire
     }
 
 }
