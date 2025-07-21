@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
@@ -29,6 +30,8 @@ public class RefreshTokenService {
     public String createRefreshToken(User user) {
         // Supprime l’ancien token si existant
         refreshTokenRepository.deleteByUser_Id(user.getId());
+
+         String token = UUID.randomUUID().toString();
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
@@ -80,6 +83,9 @@ public class RefreshTokenService {
      * Vérifie qu’un refresh token est authentique et retourne l'utilisateur s'il est valide.
      */
     public User verifyRefreshToken(String token) {
+
+        System.out.println("REFRESH TOKEN REÇU = " + token);
+
         RefreshToken refreshToken = refreshTokenRepository.findByTokenWithUser(token)
                 .orElseThrow(() -> new UnauthorizedException("Token invalide"));
 
@@ -88,5 +94,13 @@ public class RefreshTokenService {
         }
 
         return refreshToken.getUser();
+    }
+
+    /**
+     * Supprime tous les refresh tokens d'un utilisateur (avant suppression du compte)
+     */
+    @Transactional
+    public void deleteAllForUser(UUID userId) {
+        refreshTokenRepository.deleteByUser_Id(userId);
     }
 }

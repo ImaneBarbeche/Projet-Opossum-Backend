@@ -3,8 +3,10 @@ package com.opossum.auth;
 import com.opossum.user.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
@@ -14,9 +16,16 @@ import java.util.UUID;
  */
 @Component
 public class JwtUtil {
+    // Inject secret from application.yml
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
-    // Clé secrète utilisée pour signer le token (256 bits requis pour HS256)
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private Key key;
+
+    @PostConstruct
+    public void initKey() {
+        key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
 
     // Durée de validité d’un accessToken : 30 minutes (en ms)
     private static final long EXPIRATION_TIME_MS = 30 * 60 * 1000;
