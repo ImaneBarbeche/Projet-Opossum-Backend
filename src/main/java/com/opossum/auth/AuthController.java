@@ -116,9 +116,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
 
+        System.out.println(">>> [verifyEmail] Avant update: isEmailVerified=" + user.isEmailVerified());
         user.setIsEmailVerified(true);
         user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
         userRepository.save(user);
+        System.out.println(">>> [verifyEmail] Après update: isEmailVerified=" + user.isEmailVerified());
 
         response.put("success", true);
         response.put("message", "Email vérifié avec succès. Vous pouvez maintenant vous connecter.");

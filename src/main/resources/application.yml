@@ -26,6 +26,19 @@ spring:
     resources:
       add-mappings: false
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
+
 server:
   port: 8080
   servlet:
@@ -37,13 +50,6 @@ server:
 jwt:
   secret: ${JWT_SECRET}
   expiration: 86400000 # 24 heures
-
-mail:
-  host: ${MAIL_HOST}
-  port: ${MAIL_PORT}
-  username: ${MAIL_USERNAME}
-  password: ${MAIL_PASSWORD}
-  from: ${MAIL_FROM}
 
 file:
   upload-path: ${UPLOAD_PATH}
