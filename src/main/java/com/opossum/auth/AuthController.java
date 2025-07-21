@@ -91,19 +91,38 @@ public class AuthController {
     }
 
     @GetMapping("/verify-email")
-    public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
+    public ResponseEntity<Map<String, Object>> verifyEmail(@RequestParam("token") String token) {
         Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
 
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("timestamp", java.time.Instant.now());
+
         if (optionalUser.isEmpty()) {
-            return ResponseEntity.badRequest().body("Lien de vérification invalide ou expiré.");
+            response.put("success", false);
+            response.put("error", Map.of(
+                "code", "INVALID_VERIFICATION_TOKEN",
+                "message", "Token de vérification invalide ou expiré"
+            ));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         User user = optionalUser.get();
+        if (user.isEmailVerified()) {
+            response.put("success", false);
+            response.put("error", Map.of(
+                "code", "EMAIL_ALREADY_VERIFIED",
+                "message", "Cet email est déjà vérifié"
+            ));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
         user.setIsEmailVerified(true);
         user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
         userRepository.save(user);
 
-        return ResponseEntity.ok("Email vérifié avec succès !");
+        response.put("success", true);
+        response.put("message", "Email vérifié avec succès. Vous pouvez maintenant vous connecter.");
+        return ResponseEntity.ok(response);
     }
 
 @DeleteMapping("/logout")
