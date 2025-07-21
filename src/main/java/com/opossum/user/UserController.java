@@ -24,12 +24,13 @@ import com.opossum.user.dto.UpdatePasswordRequest;
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import java.time.Instant;
 
 @RestController
-@RequestMapping("api/v1/users")
+@RequestMapping("api/v1/user")
 public class UserController {
 
     private final UserService userService;
@@ -42,6 +43,12 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
 
+
+    @PostConstruct
+public void init() {
+    System.out.println(">>> UserController instancié !");
+}
+  
     /**
      * Voir les infos de son propre profil
      */
@@ -157,6 +164,7 @@ public class UserController {
 
     @GetMapping("/auth/verify-email/{token}")
     public ResponseEntity<Void> verifyEmail(@PathVariable String token) {
+         System.out.println(">>> Vérification token reçu : " + token);
         if (userService.verifyEmailToken(token)) {
             return ResponseEntity.ok().build();
         }
