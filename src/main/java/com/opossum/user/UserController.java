@@ -63,18 +63,11 @@ public class UserController {
         );
     }
 
-    @PutMapping("/edit-password")
-    public ResponseEntity<UserDto> editPassword(@PathVariable UUID id, @RequestBody String newPassword) {
-        Optional<User> userOptional = userService.editPassword(id, newPassword);
-        return userOptional.map(userService::mapToDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
 
     /**
      * Mettre à jour son profil (prénom, nom, téléphone)
      */
-    @PutMapping("/edit")
+    @PutMapping("/update-profile")
     public ResponseEntity<User> updateProfile(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody UpdateProfileRequest request
@@ -91,7 +84,7 @@ public class UserController {
     /**
      * Changer son mot de passe
      */
-    @PutMapping("/me/password")
+    @PutMapping("/update-password")
     public ResponseEntity<Void> updatePassword(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody UpdatePasswordRequest request
@@ -116,7 +109,7 @@ public class UserController {
      * Si toutes les conditions sont réunies, le compte est supprimé définitivement.
      * Les erreurs sont retournées avec un code et un message explicite pour le frontend.
      */
-    @DeleteMapping("/deleteProfile")
+    @DeleteMapping("/delete-profile")
     public ResponseEntity<?> deleteProfile(
             @RequestBody DeleteProfileRequest request,
             java.security.Principal principal
