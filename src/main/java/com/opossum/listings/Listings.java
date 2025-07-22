@@ -1,8 +1,12 @@
 package com.opossum.listings;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+
+import com.opossum.common.enums.AnnonceStatus;
+import com.opossum.common.enums.AnnonceType;
 
 @Entity
 @Table(name = "listings")
@@ -12,23 +16,25 @@ public class Listings {
     @GeneratedValue
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AnnonceStatus status = AnnonceStatus.ACTIVE;
+
     @Column(nullable = false)
     private String title;
 
     @Column(nullable = false)
     private String description;
 
-    @Column(name = "type", length = 10, nullable = false)
-    private String type; // LOST/FOUND
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AnnonceType type;
 
     @Column(name = "category", length = 50, nullable = false)
     private String category;
 
     @Column(nullable = false)
     private boolean isLost;
-
-    @Column(name = "status", length = 20)
-    private String status;
 
     @Column(name = "latitude", precision = 10, scale = 8, nullable = false)
     private BigDecimal latitude;
@@ -62,8 +68,6 @@ public class Listings {
 
     @Column(name = "resolved_at")
     private Instant resolvedAt;
-   
-
 
     public Listings() {
     }
@@ -92,12 +96,12 @@ public class Listings {
     public UUID getUserId() {
         return userId;
     }
-    
+
     public String getCity() {
         return city;
     }
 
-    public String getType() {
+    public AnnonceType getType() {
         return type;
     }
 
@@ -105,9 +109,10 @@ public class Listings {
         return updatedAt;
     }
 
-    public String getStatus() {
+    public AnnonceStatus getStatus() {
         return status;
     }
+
     public String getPhotoUrl() {
         return photoUrl;
     }
@@ -120,7 +125,7 @@ public class Listings {
         return contactEmail;
     }
     // setters
-    
+
     public void setId(UUID id) {
         this.id = id;
     }
@@ -128,6 +133,7 @@ public class Listings {
     public void setCategory(String category) {
         this.category = category;
     }
+
     public void setTitle(String title) {
         this.title = title;
     }
@@ -148,7 +154,7 @@ public class Listings {
         this.createdAt = createdAt;
     }
 
-    public void setType(String type) {
+    public void setType(AnnonceType type) {
         this.type = type;
     }
 
@@ -184,7 +190,7 @@ public class Listings {
         this.updatedAt = updatedAt;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(AnnonceStatus status) {
         this.status = status;
     }
 
