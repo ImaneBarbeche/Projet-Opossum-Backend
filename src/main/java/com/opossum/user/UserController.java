@@ -16,9 +16,7 @@ import com.opossum.user.dto.ChangePasswordRequest;
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
 import com.opossum.auth.EmailService;
-import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("api/v1/users")
