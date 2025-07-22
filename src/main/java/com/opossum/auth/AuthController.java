@@ -1,27 +1,22 @@
 package com.opossum.auth;
-
 import com.opossum.auth.dto.AuthResponse;
 import com.opossum.auth.dto.LoginRequest;
 import com.opossum.auth.dto.RefreshTokenRequest;
-import com.opossum.auth.dto.RegisterRequest;
 import com.opossum.common.exceptions.UnauthorizedException;
-import com.opossum.user.User;
-import com.opossum.user.UserRepository;
 import com.opossum.token.RefreshTokenService;
 import com.opossum.token.RefreshTokenRepository;
 import com.opossum.token.RefreshToken;
 import jakarta.validation.Valid;
-
 import java.util.Optional;
 import java.util.Map;
-
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
-
 import com.opossum.auth.dto.ForgotPasswordRequest;
-import java.util.HashMap;
 import com.opossum.auth.dto.ResetPasswordRequest;
+
+import com.opossum.auth.dto.RegisterRequest;
 
 /**
  * Contrôleur REST pour gérer l'authentification : - Inscription (register) -
@@ -33,19 +28,62 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
 
     private final AuthService authService;
-    private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
+    private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
 
     /**
      * Injection de dépendance par constructeur (manuellement). Pas de Lombok,
      * donc on écrit le constructeur à la main.
      */
-    public AuthController(AuthService authService, UserRepository userRepository, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository) {
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, EmailVerificationService emailVerificationService, PasswordResetService passwordResetService) {
         this.authService = authService;
-        this.userRepository = userRepository;
         this.refreshTokenService = refreshTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.emailVerificationService = emailVerificationService;
+        this.passwordResetService = passwordResetService;
         System.out.println(">>> AuthController instancié !");
+    }
+
+    /**
+     * Route : POST /api/v1/auth/register
+     * ➤ Inscrit un nouvel utilisateur
+     * ➤ Retourne un message de succès ou d'erreur
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        try {
+            AuthResponse response = authService.register(request);
+            return ResponseEntity.ok(
+                java.util.Map.of(
+                    "success", true,
+                    "data", response,
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "REGISTER_ERROR",
+                        "message", e.getReason() != null ? e.getReason() : "Erreur lors de l'inscription"
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(
+                java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                        "code", "INTERNAL_ERROR",
+                        "message", "Erreur lors de l'inscription: " + ex.getMessage()
+                    ),
+                    "timestamp", java.time.Instant.now()
+                )
+            );
+        }
     }
 
     /**
@@ -57,39 +95,26 @@ public class AuthController {
         System.out.println(">>> Reçu : " + request.getEmail() + " / " + request.getPassword());
         try {
             AuthResponse response = authService.login(request);
-            // Mettre à jour lastLoginAt
-            Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
-            userOpt.ifPresent(user -> {
-                user.setLastLoginAt(java.time.Instant.now());
-                userRepository.save(user);
-            });
-            // Structure de réponse conforme à la spec
-            java.util.Map<String, Object> userMap = new java.util.HashMap<>();
-            userMap.put("id", response.getId());
-            userMap.put("email", response.getEmail());
-            userMap.put("firstName", response.getFirstName());
-            userMap.put("lastName", response.getLastName());
-            userMap.put("avatar", userOpt.map(User::getAvatar).orElse(null));
-            userMap.put("role", response.getRole());
-
-            java.util.Map<String, Object> tokensMap = new java.util.HashMap<>();
-            tokensMap.put("accessToken", response.getAccessToken());
-            tokensMap.put("refreshToken", response.getRefreshToken());
-            tokensMap.put("expiresIn", response.getExpiresIn());
-
-            java.util.Map<String, Object> data = java.util.Map.of(
-                "user", userMap,
-                "tokens", tokensMap
-            );
-
-            return ResponseEntity.ok(
-                java.util.Map.of(
+            // Cookie sécurisé pour le web (Angular)
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(60 * 60 * 24 * 7) // 7 jours
+                .build();
+            // Body pour le mobile (React Native)
+            return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(java.util.Map.of(
                     "success", true,
-                    "data", data,
-                    "message", "Connexion réussie",
+                    "data", java.util.Map.of(
+                        "accessToken", response.getAccessToken(),
+                        "refreshToken", response.getRefreshToken(),
+                        "expiresIn", response.getExpiresIn()
+                    ),
                     "timestamp", java.time.Instant.now()
-                )
-            );
+                ));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             if (e.getStatusCode() == org.springframework.http.HttpStatus.CONFLICT) {
                 return ResponseEntity.status(401).body(
@@ -138,57 +163,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Route : POST /api/v1/auth/register ➤ Crée un nouveau compte utilisateur ➤
-     * Retourne les tokens JWT + user info
-     */
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        System.out.println(">>> Reçu REGISTER: " + request.getEmail() + " / " + request.getPassword());
-
-        try {
-            AuthResponse response = authService.register(request);
-            // Enveloppe la réponse selon la spec
-            java.util.Map<String, Object> data = new java.util.HashMap<>();
-            data.put("id", response.getId());
-            data.put("email", response.getEmail());
-            data.put("firstName", response.getFirstName());
-            data.put("lastName", response.getLastName());
-            data.put("avatar", request.getAvatar());
-            data.put("isEmailVerified", false);
-            return ResponseEntity.status(HttpStatus.CREATED).body(
-                java.util.Map.of(
-                    "success", true,
-                    "data", data,
-                    "message", "Compte créé avec succès. Vérifiez votre email.",
-                    "timestamp", java.time.Instant.now()
-                )
-            );
-        } catch (org.springframework.web.server.ResponseStatusException e) {
-            // Gestion des erreurs de validation (email déjà utilisé, etc)
-            return ResponseEntity.status(e.getStatusCode()).body(
-                java.util.Map.of(
-                    "success", false,
-                    "error", java.util.Map.of(
-                        "code", e.getStatusCode() == HttpStatus.CONFLICT ? "VALIDATION_ERROR" : "INTERNAL_ERROR",
-                        "message", e.getReason() != null ? e.getReason() : "Erreur lors de la création du compte"
-                    ),
-                    "timestamp", java.time.Instant.now()
-                )
-            );
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                java.util.Map.of(
-                    "success", false,
-                    "error", java.util.Map.of(
-                        "code", "INTERNAL_ERROR",
-                        "message", "Erreur lors de la création du compte: " + ex.getMessage()
-                    ),
-                    "timestamp", java.time.Instant.now()
-                )
-            );
-        }
-    }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
@@ -206,18 +180,25 @@ public class AuthController {
         }
         try {
             AuthResponse response = authService.refreshToken(request.getRefreshToken());
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(60 * 60 * 24 * 7)
+                .build();
             Map<String, Object> data = Map.of(
                 "accessToken", response.getAccessToken(),
                 "refreshToken", response.getRefreshToken(),
                 "expiresIn", response.getExpiresIn()
             );
-            return ResponseEntity.ok(
-                Map.of(
+            return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of(
                     "success", true,
                     "data", data,
                     "timestamp", java.time.Instant.now()
-                )
-            );
+                ));
         } catch (UnauthorizedException | org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(401).body(
                 Map.of(
@@ -245,128 +226,72 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        String email = request.getEmail();
-        Map<String, Object> response = new HashMap<>();
-        // Validation du format d'email
-        if (email == null || email.isBlank() || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
-            response.put("success", false);
-            response.put("error", Map.of(
-                "code", "INVALID_EMAIL",
-                "message", "Format d'email invalide"
-            ));
-            response.put("timestamp", java.time.Instant.now());
-            return ResponseEntity.status(400).body(response);
-        }
-        // Appel du service (gère la logique et la sécurité)
-        authService.forgotPassword(email);
-        response.put("success", true);
-        response.put("message", "Email de réinitialisation envoyé");
-        response.put("timestamp", java.time.Instant.now());
-        return ResponseEntity.ok(response);
+        return passwordResetService.forgotPassword(request.getEmail());
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody ResetPasswordRequest request) {
-        Map<String, Object> response = new HashMap<>();
-        String token = request.getToken();
-        String newPassword = request.getNewPassword();
-        // Validation du mot de passe
-        if (newPassword == null || newPassword.length() < 8) {
-            response.put("success", false);
-            response.put("error", Map.of(
-                "code", "INVALID_PASSWORD",
-                "message", "Le mot de passe doit contenir au moins 8 caractères"
-            ));
-            response.put("timestamp", java.time.Instant.now());
-            return ResponseEntity.status(400).body(response);
-        }
-        try {
-            authService.resetPassword(token, newPassword);
-            response.put("success", true);
-            response.put("message", "Mot de passe réinitialisé avec succès");
-            response.put("timestamp", java.time.Instant.now());
-            return ResponseEntity.ok(response);
-        } catch (org.springframework.web.server.ResponseStatusException e) {
-            response.put("success", false);
-            response.put("error", Map.of(
-                "code", "INVALID_OR_EXPIRED_TOKEN",
-                "message", "Le lien de réinitialisation est invalide ou expiré"
-            ));
-            response.put("timestamp", java.time.Instant.now());
-            return ResponseEntity.status(400).body(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", Map.of(
-                "code", "INTERNAL_ERROR",
-                "message", "Erreur lors de la réinitialisation: " + e.getMessage()
-            ));
-            response.put("timestamp", java.time.Instant.now());
-            return ResponseEntity.status(500).body(response);
-        }
+        return passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
     }
 
     @GetMapping("/verify-email")
     public ResponseEntity<Map<String, Object>> verifyEmail(@RequestParam("token") String token) {
-        Optional<User> optionalUser = userRepository.findByEmailVerificationToken(token);
+        return emailVerificationService.verifyEmail(token);
+    }
 
-        Map<String, Object> response = new java.util.HashMap<>();
-        response.put("timestamp", java.time.Instant.now());
-
-        if (optionalUser.isEmpty()) {
-            response.put("success", false);
-            response.put("error", Map.of(
-                "code", "INVALID_VERIFICATION_TOKEN",
-                "message", "Token de vérification invalide ou expiré"
-            ));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Object>> logout(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            // On supprime le cookie côté client même si le body est vide
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(0)
+                .build();
+            return ResponseEntity.badRequest()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of(
+                    "success", false,
+                    "message", "Le champ 'refreshToken' est requis.",
+                    "timestamp", java.time.Instant.now()
+                ));
         }
-
-        User user = optionalUser.get();
-        if (user.isEmailVerified()) {
-            response.put("success", false);
-            response.put("error", Map.of(
-                "code", "EMAIL_ALREADY_VERIFIED",
-                "message", "Cet email est déjà vérifié"
-            ));
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        Optional<RefreshToken> optional = refreshTokenRepository.findByToken(refreshToken);
+        if (optional.isEmpty() || optional.get().isRevoked() || optional.get().getExpiresAt().isBefore(java.time.Instant.now())) {
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(0)
+                .build();
+            return ResponseEntity.status(400)
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of(
+                    "success", false,
+                    "message", "Token invalide ou déjà révoqué.",
+                    "timestamp", java.time.Instant.now()
+                ));
         }
-
-        System.out.println(">>> [verifyEmail] Avant update: isEmailVerified=" + user.isEmailVerified());
-        user.setIsEmailVerified(true);
-        user.setEmailVerificationToken(null); // on supprime le token pour qu'il ne soit plus réutilisable
-        userRepository.save(user);
-        System.out.println(">>> [verifyEmail] Après update: isEmailVerified=" + user.isEmailVerified());
-
-        response.put("success", true);
-        response.put("message", "Email vérifié avec succès. Vous pouvez maintenant vous connecter.");
-        return ResponseEntity.ok(response);
+        refreshTokenService.revokeToken(refreshToken);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+            .httpOnly(true)
+            .secure(true)
+            .sameSite("None")
+            .path("/")
+            .maxAge(0)
+            .build();
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .body(Map.of(
+                "success", true,
+                "message", "Déconnexion réussie",
+                "timestamp", java.time.Instant.now()
+            ));
     }
-
-@PostMapping("/logout")
-public ResponseEntity<Map<String, Object>> logout(@RequestBody Map<String, String> body) {
-    String refreshToken = body.get("refreshToken");
-    if (refreshToken == null || refreshToken.isBlank()) {
-        return ResponseEntity.badRequest().body(Map.of(
-            "success", false,
-            "message", "Le champ 'refreshToken' est requis.",
-            "timestamp", java.time.Instant.now()
-        ));
-    }
-    Optional<RefreshToken> optional = refreshTokenRepository.findByToken(refreshToken);
-    if (optional.isEmpty() || optional.get().isRevoked() || optional.get().getExpiresAt().isBefore(java.time.Instant.now())) {
-        return ResponseEntity.status(400).body(Map.of(
-            "success", false,
-            "message", "Token invalide ou déjà révoqué.",
-            "timestamp", java.time.Instant.now()
-        ));
-    }
-    refreshTokenService.revokeToken(refreshToken);
-    return ResponseEntity.ok(Map.of(
-        "success", true,
-        "message", "Déconnexion réussie",
-        "timestamp", java.time.Instant.now()
-    ));
-}
 
 
 }

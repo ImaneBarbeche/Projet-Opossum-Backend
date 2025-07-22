@@ -5,6 +5,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.opossum.common.enums.Role;
+
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
