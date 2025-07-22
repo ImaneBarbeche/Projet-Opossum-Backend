@@ -101,7 +101,7 @@ public class AuthService {
         user.setLastName(request.getLastName());
         user.setPhone(request.getPhone());
         user.setAvatar(request.getAvatar());
-        user.setRole(com.opossum.user.Role.USER);
+        user.setRole(com.opossum.common.enums.Role.USER);
         user.setActive(true);
         user.setCreatedAt(Instant.now());
 
