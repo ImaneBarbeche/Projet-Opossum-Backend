@@ -1,3 +1,4 @@
+
 package com.opossum.listings;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -9,6 +10,10 @@ import com.opossum.common.enums.ListingType;
 @Entity
 @Table(name = "listings")
 public class Listings {
+    // ...existing fields...
+    public UUID getId() {
+        return id;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -70,11 +75,11 @@ public class Listings {
     public Listings() {
     }
 
-    // Getters
-    public UUID getId() {
-        return id;
-    }
+    // setters
 
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
     public String getCategory() {
         return category;
     }
@@ -121,6 +126,10 @@ public class Listings {
 
     public String getContactEmail() {
         return contactEmail;
+    }
+
+    public Instant getResolvedAt() {
+        return resolvedAt;
     }
     // setters
 
@@ -208,5 +217,7 @@ public class Listings {
         return isLost;
     }
 
-    // --- Added setters for DTO mapping ---
 }
+
+
+ 

@@ -32,19 +32,28 @@ public class UserController {
         this.userService = userService;
     }
  
-    /**
-     * Voir les infos de son propre profil
+     /**
+     * Voir un profil utilisateur (privé si 'me', public sinon)
      */
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non connecté.");
-        }
-        UserDto dto = UserMapper.mapToDto(user);
-        return ResponseEntity.ok(dto);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserProfile(
+            @PathVariable String id,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        return userService.getUserProfile(id, currentUser);
     }
 
- 
+    @GetMapping
+    public ResponseEntity<List<UserDto>> getAllUsers() {
+        List<User> users = userService.getAllUsers()
+                .stream()
+                .collect(Collectors.toList());
+        List<UserDto> userDtos = users.stream()
+                .map(UserMapper::mapToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(userDtos);
+    }
+
     /**
      * Mettre à jour son profil (prénom, nom, téléphone)
      */
@@ -75,26 +84,5 @@ public class UserController {
         return userService.deleteProfile(request, principal);
     }
 
-    /**
-     * Voir un profil utilisateur (privé si 'me', public sinon)
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getUserProfile(
-            @PathVariable String id,
-            @AuthenticationPrincipal User currentUser
-    ) {
-        return userService.getUserProfile(id, currentUser);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers() {
-        List<User> users = userService.getAllUsers()
-                .stream()
-                .collect(Collectors.toList());
-        List<UserDto> userDtos = users.stream()
-                .map(UserMapper::mapToDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(userDtos);
-    }
-
+  
 }

@@ -12,6 +12,10 @@ import com.opossum.listings.dto.UpdateListingsRequest;
 
 @Service
 public class ListingsService {
+    // Permet de sauvegarder une entité Listings
+    public Listings save(Listings l) {
+        return listingsRepository.save(l);
+    }
 
     private final ListingsRepository listingsRepository;
 
