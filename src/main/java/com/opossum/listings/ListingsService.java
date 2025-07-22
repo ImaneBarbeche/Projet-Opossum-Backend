@@ -2,6 +2,8 @@ package com.opossum.listings;
 
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
+import com.opossum.common.enums.AnnonceType;
+import com.opossum.common.enums.AnnonceStatus;
 import com.opossum.listings.common.exceptions.ForbiddenException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -44,7 +46,7 @@ import java.util.UUID;
                 user = userRepository.findByEmail(email).orElse(null);
             }
             boolean isOwner = user != null && l.getUserId().equals(user.getId());
-            boolean isVisible = "ACTIVE".equalsIgnoreCase(l.getStatus()) || isOwner;
+            boolean isVisible = "ACTIVE".equalsIgnoreCase(String.valueOf(l.getStatus())) || isOwner;
             if (!isVisible) {
                 java.util.Map<String, Object> error = new java.util.HashMap<>();
                 error.put("success", false);
@@ -110,8 +112,8 @@ import java.util.UUID;
             List<Listings> filteredListings = listingsRepository.findAll(pageable)
                 .stream()
                 .filter(l -> l.getUserId().equals(userId))
-                .filter(l -> type == null || type.isBlank() || type.equalsIgnoreCase(l.getType()))
-                .filter(l -> status == null || status.isBlank() || status.equalsIgnoreCase(l.getStatus()))
+                .filter(l -> type == null || type.isBlank() || type.equalsIgnoreCase(String.valueOf(l.getType())))
+                .filter(l -> status == null || status.isBlank() || status.equalsIgnoreCase(String.valueOf(l.getStatus())))
                 .toList();
     
             org.springframework.data.domain.Page<Listings> listingsPage = new org.springframework.data.domain.PageImpl<>(filteredListings, pageable, filteredListings.size());
@@ -136,7 +138,9 @@ import java.util.UUID;
         Listings l = new Listings();
         l.setTitle(req.getTitle());
         l.setDescription(req.getDescription());
-        l.setType(req.getType());
+        if (req.getType() != null) {
+            l.setType(com.opossum.common.enums.AnnonceType.valueOf(req.getType()));
+        }
         l.setCategory(req.getCategory());
         // Location
         if (req.getLocation() != null) {
@@ -162,7 +166,7 @@ import java.util.UUID;
          */
         public Listings createListing(Listings listing, User user) {
             listing.setUserId(user.getId());
-            listing.setStatus("ACTIVE");
+            listing.setStatus(com.opossum.common.enums.AnnonceStatus.ACTIVE);
             listing.setCreatedAt(Instant.now());
             listing.setUpdatedAt(Instant.now());
             // Validation métier
@@ -244,7 +248,7 @@ import java.util.UUID;
                 String[] allowed = {"ACTIVE", "RESOLVED", "EXPIRED"};
                 boolean valid = java.util.Arrays.asList(allowed).contains(req.getStatus());
                 if (!valid) throw new IllegalArgumentException("Statut invalide");
-                existing.setStatus(req.getStatus());
+                existing.setStatus(com.opossum.common.enums.AnnonceStatus.valueOf(req.getStatus()));
             }
             // Champs non modifiables ignorés (type, location, etc.)
             existing.setUpdatedAt(Instant.now());
