@@ -41,7 +41,7 @@ public class UserController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non connecté.");
         }
-        UserDto dto = userService.mapToDto(user);
+        UserDto dto = UserMapper.mapToDto(user);
         return ResponseEntity.ok(dto);
     }
 
@@ -93,7 +93,7 @@ public class UserController {
                 .stream()
                 .collect(Collectors.toList());
         List<UserDto> userDtos = users.stream()
-                .map(userService::mapToDto)
+                .map(UserMapper::mapToDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(userDtos);
     }
