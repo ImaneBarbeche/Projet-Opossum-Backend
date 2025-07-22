@@ -15,8 +15,8 @@ public class UserMapper {
                 user.getLastName(),
                 user.getEmail(),
                 user.getPhone(),
-                user.getAvatar(), // avatarUrl = avatar
-                user.getRole() != null ? user.getRole().name() : null, // enum to string
+                user.getAvatar(),
+                user.getRole(),
                 user.isActive(),
                 user.isEmailVerified(),
                 user.getCreatedAt(),

@@ -133,11 +133,9 @@ public class User implements UserDetails {
     }
 
     public Role getRole() {
-    public Role getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
     public void setRole(Role role) {
         this.role = role;
     }
@@ -217,7 +215,6 @@ public class User implements UserDetails {
     // === Implémentation UserDetails (Spring Security) ===
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 

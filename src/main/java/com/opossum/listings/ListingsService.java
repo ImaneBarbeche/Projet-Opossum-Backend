@@ -78,8 +78,8 @@ public class ListingsService {
                 existing.setAddress(updateListingsRequest.getAddress());
             if (updateListingsRequest.getCity() != null)
                 existing.setCity(updateListingsRequest.getCity());
-            if (updateListingsRequest.getStatus() != null && !updateListingsRequest.getStatus().isBlank()) {
-                existing.setStatus(ListingStatus.valueOf(updateListingsRequest.getStatus().toUpperCase()));
+            if (updateListingsRequest.getStatus() != null) {
+                existing.setStatus(updateListingsRequest.getStatus());
             }
             existing.setUpdatedAt(Instant.now());
             return listingsRepository.save(existing);

@@ -1,5 +1,8 @@
 
+
 package com.opossum.user;
+
+import java.util.List;
 import com.opossum.user.dto.ChangePasswordRequest;
 import com.opossum.auth.EmailService;
 import java.time.Instant;
@@ -19,6 +22,20 @@ import com.opossum.user.dto.DeleteProfileRequest;
 @Transactional(readOnly = true)
 
 public class UserService {
+    public com.opossum.user.dto.UserProfileResponse mapToUserProfileResponse(User user) {
+        if (user == null) {
+            return null;
+        }
+        return new com.opossum.user.dto.UserProfileResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhone(),
+                user.getAvatar(),
+                user.getRole() != null ? user.getRole().name() : null
+        );
+    }
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;

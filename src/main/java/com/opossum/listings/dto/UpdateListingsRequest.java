@@ -3,6 +3,7 @@ package com.opossum.listings.dto;
 import java.util.UUID;
 
 import com.opossum.common.enums.ListingStatus;
+import com.opossum.common.enums.ListingType;
 
 public class UpdateListingsRequest {
 
@@ -16,32 +17,11 @@ public class UpdateListingsRequest {
     private String address;
     private String city;
     private UUID userId;
-    private String category;
-    private String status;
 
-    public enum ListingType {
-        LOST,
-        FOUND
-    }
 
     public UpdateListingsRequest() {
     } 
 
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     public String getTitle() {
         return title;
