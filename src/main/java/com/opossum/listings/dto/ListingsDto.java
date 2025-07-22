@@ -2,6 +2,7 @@ package com.opossum.listings.dto;
 
 import java.time.Instant;
 import java.util.UUID;
+import com.opossum.common.enums.ListingStatus;
 
 public class ListingsDto {
 
@@ -10,7 +11,7 @@ public class ListingsDto {
     private String description;
     private String type;
     private String category;
-    private String status;
+    private ListingStatus status;
     private Double latitude;
     private Double longitude;
     private String address;
@@ -20,7 +21,7 @@ public class ListingsDto {
     private Instant resolvedAt;
     private UUID userId;
 
-    public ListingsDto(UUID id, String title, String description, String type, String category, String status, Double latitude, Double longitude, String address, String city, Instant createdAt, Instant updatedAt, Instant resolvedAt, UUID userId) {
+    public ListingsDto(UUID id, String title, String description, String type, String category, ListingStatus status, Double latitude, Double longitude, String address, String city, Instant createdAt, Instant updatedAt, Instant resolvedAt, UUID userId) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -57,7 +58,7 @@ public class ListingsDto {
         return category;
     }
 
-    public String getStatus() {
+    public ListingStatus getStatus() {
         return status;
     }
 

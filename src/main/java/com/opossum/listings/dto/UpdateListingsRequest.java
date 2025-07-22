@@ -2,13 +2,15 @@ package com.opossum.listings.dto;
 
 import java.util.UUID;
 
+import com.opossum.common.enums.ListingStatus;
+
 public class UpdateListingsRequest {
 
     private String title;
     private String description;
     private ListingType type;
     private String category;
-    private String status;
+    private ListingStatus status;
     private Double latitude;
     private Double longitude;
     private String address;
@@ -55,11 +57,11 @@ public class UpdateListingsRequest {
         this.category = category;
     }
 
-    public String getStatus() {
+    public ListingStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ListingStatus status) {
         this.status = status;
     }
 

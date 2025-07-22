@@ -26,7 +26,8 @@ public class Listings {
     private String category;
 
     @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private ListingStatus status;
 
     @Column(nullable = false)
     private Double latitude;
@@ -57,6 +58,11 @@ public class Listings {
         FOUND
     }
 
+    public enum ListingStatus {
+        ACTIVE,
+        RESOLVED
+    }
+
     public Listings() {
     }
 
@@ -81,7 +87,7 @@ public class Listings {
         return category;
     }
 
-    public String getStatus() {
+    public ListingStatus getStatus() {
         return status;
     }
 
@@ -141,7 +147,7 @@ public class Listings {
         this.category = category;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ListingStatus status) {
         this.status = status;
     }
 

@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import com.opossum.listings.dto.CreateListingsRequest;
 import com.opossum.listings.dto.UpdateListingsRequest;
+import com.opossum.common.enums.ListingStatus;
 
 @Service
 public class ListingsService {
@@ -20,6 +21,7 @@ public class ListingsService {
         this.listingsRepository = listingsRepository;
     }
 
+    @Transactional
     public Listings createListing(CreateListingsRequest createListingsRequest) {
         Listings listing = new Listings();
         listing.setTitle(createListingsRequest.getTitle());
@@ -31,6 +33,7 @@ public class ListingsService {
         listing.setAddress(createListingsRequest.getAddress());
         listing.setCity(createListingsRequest.getCity());
         listing.setUserId(createListingsRequest.getUserId());
+        listing.setStatus(Listings.ListingStatus.ACTIVE);
         listing.setUpdatedAt(Instant.now());
         return listingsRepository.save(listing);
     }
@@ -58,16 +61,27 @@ public class ListingsService {
             existing.setLongitude(updateListingsRequest.getLongitude());
             existing.setAddress(updateListingsRequest.getAddress());
             existing.setCity(updateListingsRequest.getCity());
+
+            // Correction ici
+            if (updateListingsRequest.getStatus() != null && !updateListingsRequest.getStatus().isBlank()) {
+                existing.setStatus(ListingStatus.valueOf(updateListingsRequest.getStatus().toUpperCase()));
+            }
+
             existing.setUpdatedAt(Instant.now());
             return listingsRepository.save(existing);
         });
     }
 
+    @Transactional
     public void deleteListing(UUID id) {
         listingsRepository.deleteById(id);
     }
 
     public List<Listings> searchListings(String title) {
         return listingsRepository.findByTitleContainingIgnoreCase(title);
+    }
+
+    public List<Listings> getListingsByStatus(ListingStatus status) {
+        return listingsRepository.findByStatus(status);
     }
 }

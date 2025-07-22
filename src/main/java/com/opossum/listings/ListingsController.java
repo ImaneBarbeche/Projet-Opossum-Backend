@@ -8,14 +8,13 @@ import org.springframework.web.bind.annotation.*;
 import com.opossum.listings.dto.CreateListingsRequest;
 import com.opossum.listings.dto.UpdateListingsRequest;
 import com.opossum.user.User;
-
+import com.opossum.common.enums.ListingStatus;
 import com.opossum.user.dto.UserProfileResponse;
+import com.opossum.user.UserService;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.opossum.user.UserService;
 
 @RestController
 @RequestMapping("/api/v1/listings")
@@ -29,19 +28,13 @@ public class ListingsController {
         this.userService = userService;
     }
 
-    /**
-     * Creates a new listing.
-     *
-     * @param createListingsRequest the listing details to be created
-     *
-     *
-     */
     @PostMapping("/create")
     public ResponseEntity<Listings> create(@RequestBody CreateListingsRequest createListingsRequest) {
-        return ResponseEntity.ok(listingsService.createListing(createListingsRequest));
+        Listings created = listingsService.createListing(createListingsRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("{id}/update")
+    @PutMapping("/{id}/update")
     public ResponseEntity<Listings> update(@PathVariable UUID id, @RequestBody UpdateListingsRequest updateListingsRequest) {
         Optional<Listings> updated = listingsService.updateListing(id, updateListingsRequest);
         return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -68,10 +61,9 @@ public class ListingsController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Listings>> getAllListings(@RequestParam(required = false, defaultValue = "false") boolean isLost) {
+    public ResponseEntity<List<Listings>> getAllListings() {
         List<Listings> listings = listingsService.getAllListings();
         return ResponseEntity.ok(listings);
-
     }
 
     @GetMapping("/{id}")
@@ -81,32 +73,22 @@ public class ListingsController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    /**
-     * Returns the UserProfileResponse associated with the listing with the
-     * given listingId
-     *
-     * @param listingId the id of the listing
-     * @return the ResponseEntity containing the UserProfileResponse
-     */
     @GetMapping("/listing/{listingId}/user")
     public ResponseEntity<UserProfileResponse> getUserByListingId(@PathVariable UUID listingId) {
         Optional<Listings> listingOpt = listingsService.getListingById(listingId);
-
         if (listingOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Listings listing = listingOpt.get();
-        UUID userId = listing.getUserId();
+        UUID userId = listingOpt.get().getUserId();
+        return userService.getUserById(userId)
+                .map(user -> ResponseEntity.ok(userService.mapToDto(user)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 
-        Optional<User> userOpt = userService.getUserById(userId);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            UserProfileResponse userProfileResponse = userService.mapToDto(user);
-            return ResponseEntity.ok(userProfileResponse);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<Listings>> getListingsByStatus(@PathVariable ListingStatus status) {
+        List<Listings> listings = listingsService.getListingsByStatus(status);
+        return ResponseEntity.ok(listings);
     }
 }
