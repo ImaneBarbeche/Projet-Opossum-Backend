@@ -1,12 +1,10 @@
 package com.opossum.listings;
-
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
-
-import com.opossum.common.enums.AnnonceStatus;
-import com.opossum.common.enums.AnnonceType;
+import com.opossum.common.enums.ListingStatus;
+import com.opossum.common.enums.ListingType;
 
 @Entity
 @Table(name = "listings")
@@ -18,7 +16,7 @@ public class Listings {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AnnonceStatus status = AnnonceStatus.ACTIVE;
+    private ListingStatus status = ListingStatus.ACTIVE;
 
     @Column(nullable = false)
     private String title;
@@ -28,7 +26,7 @@ public class Listings {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AnnonceType type;
+    private ListingType type;
 
     @Column(name = "category", length = 50, nullable = false)
     private String category;
@@ -59,10 +57,7 @@ public class Listings {
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
-
-    @Column(nullable = false)
-    private String city;
-
+    
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -104,7 +99,7 @@ public class Listings {
         return city;
     }
 
-    public AnnonceType getType() {
+    public ListingType getType() {
         return type;
     }
 
@@ -112,7 +107,7 @@ public class Listings {
         return updatedAt;
     }
 
-    public AnnonceStatus getStatus() {
+    public ListingStatus getStatus() {
         return status;
     }
 
@@ -157,7 +152,7 @@ public class Listings {
         this.createdAt = createdAt;
     }
 
-    public void setType(AnnonceType type) {
+    public void setType(ListingType type) {
         this.type = type;
     }
 
@@ -193,7 +188,7 @@ public class Listings {
         this.updatedAt = updatedAt;
     }
 
-    public void setStatus(AnnonceStatus status) {
+    public void setStatus(ListingStatus status) {
         this.status = status;
     }
 

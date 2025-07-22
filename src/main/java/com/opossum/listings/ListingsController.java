@@ -1,10 +1,8 @@
 package com.opossum.listings;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import com.opossum.listings.dto.CreateListingsRequest;
 import com.opossum.listings.dto.UpdateListingsRequest;
 import com.opossum.user.User;
@@ -33,8 +31,11 @@ public class ListingsController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Listings> create(@RequestBody CreateListingsRequest createListingsRequest) {
-        Listings created = listingsService.createListing(createListingsRequest);
+    public ResponseEntity<Listings> create(@AuthenticationPrincipal User user, @RequestBody CreateListingsRequest createListingsRequest) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Listings created = listingsService.createListing(createListingsRequest, user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -86,13 +87,19 @@ public class ListingsController {
 
         UUID userId = listingOpt.get().getUserId();
         return userService.getUserById(userId)
-                .map(user -> ResponseEntity.ok(userService.mapToDto(user)))
+                .map(userService::mapToUserProfileResponse)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<Listings>> getListingsByStatus(@PathVariable ListingStatus status) {
-        List<Listings> listings = listingsService.getListingsByStatus(status);
-        return ResponseEntity.ok(listings);
+    public ResponseEntity<List<Listings>> getListingsByStatus(@PathVariable String status) {
+        try {
+            ListingStatus enumStatus = ListingStatus.valueOf(status.toUpperCase());
+            List<Listings> listings = listingsService.getListingsByStatus(enumStatus);
+            return ResponseEntity.ok(listings);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

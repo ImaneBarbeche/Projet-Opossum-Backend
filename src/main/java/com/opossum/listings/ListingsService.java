@@ -1,45 +1,47 @@
 package com.opossum.listings;
-
-import com.opossum.user.User;
 import com.opossum.user.UserRepository;
-import com.opossum.common.enums.AnnonceType;
-import com.opossum.common.enums.AnnonceStatus;
-import com.opossum.listings.common.exceptions.ForbiddenException;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import com.opossum.common.enums.ListingType;
+import com.opossum.common.enums.ListingStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.*;
-import java.util.UUID;
 
 import com.opossum.listings.dto.CreateListingsRequest;
 import com.opossum.listings.dto.UpdateListingsRequest;
-import com.opossum.common.enums.ListingStatus;
 
-@Service public class ListingsService {
+@Service
+public class ListingsService {
 
     private final ListingsRepository listingsRepository;
-    private final UserRepository userRepository;
 
     public ListingsService(ListingsRepository listingsRepository, UserRepository userRepository) {
         this.listingsRepository = listingsRepository;
     }
 
     @Transactional
-    public Listings createListing(CreateListingsRequest createListingsRequest) {
+    public Listings createListing(CreateListingsRequest createListingsRequest, UUID userId) {
         Listings listing = new Listings();
         listing.setTitle(createListingsRequest.getTitle());
         listing.setDescription(createListingsRequest.getDescription());
-        listing.setType(Listings.ListingType.valueOf(createListingsRequest.getType().name()));
+        // Conversion String -> Enum (type)
+        if (createListingsRequest.getType() != null) {
+            listing.setType(ListingType.valueOf(createListingsRequest.getType().toUpperCase()));
+        }
         listing.setCategory(createListingsRequest.getCategory());
-        listing.setLatitude(createListingsRequest.getLatitude());
-        listing.setLongitude(createListingsRequest.getLongitude());
-        listing.setAddress(createListingsRequest.getAddress());
-        listing.setCity(createListingsRequest.getCity());
-        listing.setUserId(createListingsRequest.getUserId());
-        listing.setStatus(Listings.ListingStatus.ACTIVE);
+        // Location (null safe)
+        if (createListingsRequest.getLocation() != null) {
+            var loc = createListingsRequest.getLocation();
+            if (loc.getLatitude() != null)
+                listing.setLatitude(java.math.BigDecimal.valueOf(loc.getLatitude()));
+            if (loc.getLongitude() != null)
+                listing.setLongitude(java.math.BigDecimal.valueOf(loc.getLongitude()));
+            listing.setAddress(loc.getAddress());
+            listing.setCity(loc.getCity());
+        }
+        // userId doit venir du contexte d'authentification
+        listing.setUserId(userId);
+        listing.setStatus(ListingStatus.ACTIVE);
         listing.setUpdatedAt(Instant.now());
         return listingsRepository.save(listing);
     }
@@ -59,20 +61,26 @@ import com.opossum.common.enums.ListingStatus;
     @Transactional
     public Optional<Listings> updateListing(UUID id, UpdateListingsRequest updateListingsRequest) {
         return listingsRepository.findById(id).map(existing -> {
-            existing.setTitle(updateListingsRequest.getTitle());
-            existing.setDescription(updateListingsRequest.getDescription());
-            existing.setType(Listings.ListingType.valueOf(updateListingsRequest.getType().name()));
-            existing.setCategory(updateListingsRequest.getCategory());
-            existing.setLatitude(updateListingsRequest.getLatitude());
-            existing.setLongitude(updateListingsRequest.getLongitude());
-            existing.setAddress(updateListingsRequest.getAddress());
-            existing.setCity(updateListingsRequest.getCity());
-
-            // Correction ici
+            if (updateListingsRequest.getTitle() != null)
+                existing.setTitle(updateListingsRequest.getTitle());
+            if (updateListingsRequest.getDescription() != null)
+                existing.setDescription(updateListingsRequest.getDescription());
+            if (updateListingsRequest.getType() != null) {
+                existing.setType(ListingType.valueOf(updateListingsRequest.getType().name()));
+            }
+            if (updateListingsRequest.getCategory() != null)
+                existing.setCategory(updateListingsRequest.getCategory());
+            if (updateListingsRequest.getLatitude() != null)
+                existing.setLatitude(java.math.BigDecimal.valueOf(updateListingsRequest.getLatitude()));
+            if (updateListingsRequest.getLongitude() != null)
+                existing.setLongitude(java.math.BigDecimal.valueOf(updateListingsRequest.getLongitude()));
+            if (updateListingsRequest.getAddress() != null)
+                existing.setAddress(updateListingsRequest.getAddress());
+            if (updateListingsRequest.getCity() != null)
+                existing.setCity(updateListingsRequest.getCity());
             if (updateListingsRequest.getStatus() != null && !updateListingsRequest.getStatus().isBlank()) {
                 existing.setStatus(ListingStatus.valueOf(updateListingsRequest.getStatus().toUpperCase()));
             }
-
             existing.setUpdatedAt(Instant.now());
             return listingsRepository.save(existing);
         });

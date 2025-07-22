@@ -1,8 +1,12 @@
+
 package com.opossum.user;
+
+import com.opossum.user.dto.UserProfileResponse;
 
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 // import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +24,21 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+
+    public UserProfileResponse mapToUserProfileResponse(User user) {
+        if (user == null) {
+            return null;
+        }
+        return new UserProfileResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhone(),
+                user.getAvatar(),
+                user.getRole() != null ? user.getRole().name() : null
+        );
+    }
 
     // @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService) {
@@ -109,15 +128,14 @@ public class UserService {
         if (user == null) {
             return null;
         }
-
         return new UserDto(
                 user.getId(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getEmail(),
                 user.getPhone(),
-                user.getAvatar(), // avatarUrl = avatar
-                user.getRole() != null ? user.getRole().name() : null, // enum to string
+                user.getAvatar(),
+                user.getRole(),
                 user.isActive(),
                 user.isEmailVerified(),
                 user.getCreatedAt(),
