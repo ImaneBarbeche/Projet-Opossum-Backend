@@ -1,5 +1,6 @@
 
 package com.opossum.listings;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -39,10 +40,10 @@ public class Listings {
     @Column(nullable = false)
     private boolean isLost;
 
-    @Column(name = "latitude", precision = 10, scale = 8, nullable = false)
+    @Column(name = "latitude", precision = 10, scale = 8, nullable = true)
     private BigDecimal latitude;
 
-    @Column(name = "longitude", precision = 11, scale = 8, nullable = false)
+    @Column(name = "longitude", precision = 11, scale = 8, nullable = true)
     private BigDecimal longitude;
 
     @Column(name = "address")
@@ -62,9 +63,16 @@ public class Listings {
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
-    
+
     @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 
     @Column(nullable = false)
     private Instant updatedAt;
@@ -80,6 +88,7 @@ public class Listings {
     public void setResolvedAt(Instant resolvedAt) {
         this.resolvedAt = resolvedAt;
     }
+
     public String getCategory() {
         return category;
     }
@@ -218,6 +227,3 @@ public class Listings {
     }
 
 }
-
-
- 

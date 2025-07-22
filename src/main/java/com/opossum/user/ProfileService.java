@@ -35,7 +35,9 @@ public class ProfileService {
                     )
                 );
             }
-            if (!currentUser.isActive()) {
+            // Recharge l'utilisateur depuis la base pour avoir toutes les infos à jour
+            User user = userRepository.findById(currentUser.getId()).orElse(currentUser);
+            if (!user.isActive()) {
                 return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(
                     java.util.Map.of(
                         "success", false,
@@ -48,18 +50,18 @@ public class ProfileService {
                 );
             }
             UserDto dto = new UserDto(
-                currentUser.getId(),
-                currentUser.getFirstName(),
-                currentUser.getLastName(),
-                currentUser.getEmail(),
-                currentUser.getPhone(),
-                currentUser.getAvatar(),
-                currentUser.getRole(),
-                currentUser.isActive(),
-                currentUser.isEmailVerified(),
-                currentUser.getCreatedAt(),
-                currentUser.getUpdatedAt(),
-                currentUser.getLastLoginAt()
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getAvatar(),
+                user.getRole(),
+                user.isActive(),
+                user.isEmailVerified(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getLastLoginAt()
             );
             return ResponseEntity.ok(
                 java.util.Map.of(

@@ -1,4 +1,5 @@
 package com.opossum.listings;
+
 import com.opossum.user.UserRepository;
 import com.opossum.common.enums.ListingType;
 import com.opossum.common.enums.ListingStatus;
@@ -26,6 +27,7 @@ public class ListingsService {
     @Transactional
     public Listings createListing(CreateListingsRequest createListingsRequest, UUID userId) {
         Listings listing = new Listings();
+        listing.setCreatedAt(Instant.now());
         listing.setTitle(createListingsRequest.getTitle());
         listing.setDescription(createListingsRequest.getDescription());
         // Conversion String -> Enum (type)
@@ -36,12 +38,21 @@ public class ListingsService {
         // Location (null safe)
         if (createListingsRequest.getLocation() != null) {
             var loc = createListingsRequest.getLocation();
-            if (loc.getLatitude() != null)
+            if (loc.getLatitude() != null && loc.getLongitude() != null) {
                 listing.setLatitude(java.math.BigDecimal.valueOf(loc.getLatitude()));
-            if (loc.getLongitude() != null)
                 listing.setLongitude(java.math.BigDecimal.valueOf(loc.getLongitude()));
+            }
             listing.setAddress(loc.getAddress());
             listing.setCity(loc.getCity());
+        }
+        // Validation métier spec : city requis, (GPS ou adresse requis)
+        if (listing.getCity() == null || listing.getCity().isBlank()) {
+            throw new IllegalArgumentException("Le champ 'city' est obligatoire.");
+        }
+        boolean hasGps = listing.getLatitude() != null && listing.getLongitude() != null;
+        boolean hasAddress = listing.getAddress() != null && !listing.getAddress().isBlank();
+        if (!hasGps && !hasAddress) {
+            throw new IllegalArgumentException("Soit latitude+longitude, soit address doit être renseigné.");
         }
         // userId doit venir du contexte d'authentification
         listing.setUserId(userId);
