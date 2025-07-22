@@ -1,17 +1,15 @@
 package com.opossum.auth;
-
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.opossum.auth.dto.AuthResponse;
 import com.opossum.auth.dto.LoginRequest;
 import com.opossum.auth.dto.RegisterRequest;
@@ -19,7 +17,6 @@ import com.opossum.common.exceptions.UnauthorizedException;
 import com.opossum.token.RefreshTokenService;
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
-
 import jakarta.transaction.Transactional;
 
 /**
@@ -27,7 +24,7 @@ import jakarta.transaction.Transactional;
  */
 @Service
 public class AuthService {
-
+    
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     // private final AuthenticationManager authenticationManager;
@@ -76,6 +73,43 @@ public class AuthService {
         System.out.println("Connexion réussie pour : " + user.getEmail());
 
         return buildAuthResponse(user);
+    }
+/**
+     * Authentifie un utilisateur et retourne la réponse enrichie prête à être envoyée par le contrôleur
+     */
+    public ResponseEntity<Map<String, Object>> loginResponse(LoginRequest request) {
+        AuthResponse response = login(request);
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        userOpt.ifPresent(user -> {
+            user.setLastLoginAt(java.time.Instant.now());
+            userRepository.save(user);
+        });
+        Map<String, Object> userMap = new java.util.HashMap<>();
+        userMap.put("id", response.getId());
+        userMap.put("email", response.getEmail());
+        userMap.put("firstName", response.getFirstName());
+        userMap.put("lastName", response.getLastName());
+        userMap.put("avatar", userOpt.map(User::getAvatar).orElse(null));
+        userMap.put("role", response.getRole());
+
+        Map<String, Object> tokensMap = new java.util.HashMap<>();
+        tokensMap.put("accessToken", response.getAccessToken());
+        tokensMap.put("refreshToken", response.getRefreshToken());
+        tokensMap.put("expiresIn", response.getExpiresIn());
+
+        Map<String, Object> data = java.util.Map.of(
+            "user", userMap,
+            "tokens", tokensMap
+        );
+
+        return ResponseEntity.ok(
+            java.util.Map.of(
+                "success", true,
+                "data", data,
+                "message", "Connexion réussie",
+                "timestamp", java.time.Instant.now()
+            )
+        );
     }
 
     /**
@@ -139,62 +173,4 @@ public class AuthService {
         User user = refreshTokenService.verifyRefreshToken(refreshToken);
         return buildAuthResponse(user);
     }
-
-    public void forgotPassword(String email) {
-        // 1. Trouver l’utilisateur
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-
-        if (optionalUser.isEmpty()) {
-            // Pour ne pas divulguer si un compte existe ou pas : on ne dit rien
-            return;
-        }
-
-        User user = optionalUser.get();
-
-        // 2. Générer le token de reset
-        String resetToken = UUID.randomUUID().toString();
-        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30)); // valide 30 min
-
-        // 3. Mettre à jour l’utilisateur
-        user.setPasswordResetToken(resetToken);
-        user.setPasswordResetExpiresAt(expiresAt);
-
-        userRepository.save(user);
-
-        // 4. Envoyer le lien de réinitialisation par email
-        emailService.sendResetPasswordEmail(user.getEmail(), resetToken);
-    }
-
-    public void resetPassword(String token, String newPassword) {
-        // 1. Vérifier que le token correspond à un utilisateur
-        Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
-
-        if (optionalUser.isEmpty()) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Token invalide.");
-        }
-
-        User user = optionalUser.get();
-
-        // 2. Vérifier la date d’expiration
-        Instant now = Instant.now();
-        Instant expiresAt = user.getPasswordResetExpiresAt();
-
-        if (expiresAt == null || expiresAt.isBefore(now)) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Le lien de réinitialisation a expiré.");
-        }
-
-        // 3. Hacher le nouveau mot de passe
-        String hashedPassword = passwordEncoder.encode(newPassword);
-        user.setPasswordHash(hashedPassword);
-
-        // 4. Supprimer les infos de reset
-        user.setPasswordResetToken(null);
-        user.setPasswordResetExpiresAt(null);
-
-        // 5. Sauvegarder
-        userRepository.save(user);
-
-        // Mot de passe mis à jour, aucune sortie console nécessaire
-    }
-
 }
