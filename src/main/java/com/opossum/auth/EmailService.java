@@ -30,7 +30,49 @@ public class EmailService {
 
         mailSender.send(message);
     }
-        public void sendResetPasswordEmail(String toEmail, String token) {
+
+    /**
+     * Envoie un email de notification à l'utilisateur après un changement de mot de passe
+     * @param toEmail l'adresse email du destinataire
+     * @param firstName le prénom de l'utilisateur (optionnel pour personnaliser le message)
+     */
+    public void sendPasswordChangedNotification(String toEmail, String firstName) {
+        String subject = "Votre mot de passe a été modifié";
+        String text = "Bonjour" + (firstName != null && !firstName.isBlank() ? " " + firstName : "") + ",\n\n" +
+                "Votre mot de passe vient d'être modifié avec succès.\n" +
+                "Si vous n'êtes pas à l'origine de ce changement, merci de contacter immédiatement le support.\n\n" +
+                "L'équipe Opossum.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Envoie un email de confirmation après suppression du compte utilisateur
+     * @param toEmail l'adresse email du destinataire
+     * @param firstName le prénom de l'utilisateur (optionnel)
+     */
+    public void sendAccountDeletedConfirmation(String toEmail, String firstName) {
+        String subject = "Votre compte a bien été supprimé";
+        String text = "Bonjour" + (firstName != null && !firstName.isBlank() ? " " + firstName : "") + ",\n\n" +
+                "Votre compte Opossum a bien été supprimé.\n" +
+                "Si vous n'êtes pas à l'origine de cette action, merci de contacter immédiatement le support.\n\n" +
+                "L'équipe Opossum.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
+    }
+    public void sendResetPasswordEmail(String toEmail, String token) {
         String resetUrl = "http://192.168.1.7:8080/reset-password.html?token=" + token;
         String subject = "Réinitialisation de votre mot de passe";
         String text = "Bonjour,\n\nPour réinitialiser votre mot de passe, cliquez sur ce lien :\n" + resetUrl +
