@@ -1,16 +1,22 @@
 package com.opossum.user.dto;
 
+import com.opossum.common.enums.Role;
+
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * DTO (Data Transfer Object) pour exposer les données d'un utilisateur au
+ * front.
+ */
 public class UserDto {
     private UUID id;
-    private String firstname;
-    private String lastname;
+    private String firstName;
+    private String lastName;
     private String email;
     private String phone;
-    private String avatarUrl;
-    private String role;
+    private String avatar;
+    private Role role; // Modification : utiliser l'énumération Role au lieu de String
     private boolean isActive;
     private boolean isEmailVerified;
     private Instant createdAt;
@@ -18,14 +24,16 @@ public class UserDto {
     private Instant lastLoginAt;
 
     // Constructeur
-    public UserDto(UUID id, String firstname, String lastname, String email, String phone, String avatarUrl, String role, boolean isActive, boolean isEmailVerified, Instant createdAt, Instant updatedAt, Instant lastLoginAt) {
+    public UserDto(UUID id, String firstName, String lastName, String email, String phone,
+            String avatar, Role role, boolean isActive, boolean isEmailVerified,
+            Instant createdAt, Instant updatedAt, Instant lastLoginAt) {
         this.id = id;
-        this.firstname = firstname;
-        this.lastname = lastname;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.phone = phone;
-        this.avatarUrl = avatarUrl;
-        this.role = role;
+        this.avatar = avatar;
+        this.role = role; // Modification : utiliser l'énumération Role au lieu de String
         this.isActive = isActive;
         this.isEmailVerified = isEmailVerified;
         this.createdAt = createdAt;
@@ -38,12 +46,12 @@ public class UserDto {
         return id;
     }
 
-    public String getFirstname() {
-        return firstname;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public String getLastname() {
-        return lastname;
+    public String getLastName() {
+        return lastName;
     }
 
     public String getEmail() {
@@ -54,11 +62,11 @@ public class UserDto {
         return phone;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public String getAvatar() {
+        return avatar;
     }
 
-    public String getRole() {
+    public Role getRole() { // Modification : utiliser l'énumération Role au lieu de String
         return role;
     }
 
@@ -70,6 +78,10 @@ public class UserDto {
         return isEmailVerified;
     }
 
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
     public Instant getUpdatedAt() {
         return updatedAt;
     }
@@ -78,21 +90,17 @@ public class UserDto {
         return lastLoginAt;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
     // Setters
     public void setId(UUID id) {
         this.id = id;
     }
 
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public void setEmail(String email) {
@@ -103,11 +111,11 @@ public class UserDto {
         this.phone = phone;
     }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) { // Modification : utiliser l'énumération Role au lieu de String
         this.role = role;
     }
 

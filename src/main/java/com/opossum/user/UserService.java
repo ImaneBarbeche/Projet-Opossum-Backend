@@ -1,7 +1,6 @@
 package com.opossum.user;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,16 +45,14 @@ public class UserService {
     }
 
     @Transactional
-    public Optional<User> editPassword(UUID id, String newPassword) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+    public User updatePassword(User user, String newPassword) {
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-        return Optional.of(user);
+        user.setUpdatedAt(Instant.now());
+        return userRepository.save(user);
     }
-    
 
     @Transactional
-    public void deleteUser(UUID id) {
+    public void deleteProfile(UUID id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(id);
         }
@@ -64,16 +61,12 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-
     @Transactional
-    public User updateProfile(UUID id, UpdateProfileRequest dto) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+    public User updateProfile(User user, UpdateProfileRequest dto) {
 
         if (dto.getFirstName() != null && !dto.getFirstName().isBlank()) {
             user.setFirstName(dto.getFirstName());
         }
-
         if (dto.getLastName() != null && !dto.getLastName().isBlank()) {
             user.setLastName(dto.getLastName());
         }
@@ -93,7 +86,6 @@ public class UserService {
     @Transactional
     public boolean verifyEmailToken(String token) {
         Optional<User> userOpt = userRepository.findByEmailVerificationToken(token);
-
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setEmailVerified(true);

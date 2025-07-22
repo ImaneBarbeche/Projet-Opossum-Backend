@@ -1,9 +1,19 @@
 package com.opossum.listings;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.opossum.user.UserRepository;
-import java.util.List;
+
+import com.opossum.listings.dto.CreateListingsRequest;
 import com.opossum.listings.dto.UpdateListingsRequest;
+import com.opossum.user.User;
+import com.opossum.common.enums.ListingStatus;
+import com.opossum.user.dto.UserProfileResponse;
+import com.opossum.user.UserService;
+
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import com.opossum.listings.Listings;
 import com.opossum.listings.ListingsService;
@@ -14,125 +24,75 @@ import com.opossum.listings.ListingsService;
 
 public class ListingsController {
 
-    private final ListingsService ListingsService;
-    private final UserRepository userRepository;
+    private final ListingsService listingsService;
+    private final UserService userService;
 
-    public ListingsController(ListingsService ListingsService, UserRepository userRepository) {
-        this.ListingsService = ListingsService;
-        this.userRepository = userRepository;
+    public ListingsController(ListingsService listingsService, UserService userService) {
+        this.listingsService = listingsService;
+        this.userService = userService;
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> create(
-            @RequestBody com.opossum.listings.dto.CreateListingsRequest req,
-            java.security.Principal principal
-    ) {
-        String email = principal.getName();
-        com.opossum.user.User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        try {
-            Listings listing = ListingsService.mapCreateRequestToEntity(req);
-            java.util.Map<String, Object> response = ListingsService.createListingAndBuildResponse(listing, user);
-            return ResponseEntity.status(201).body(response);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(validationError("validation", ex.getMessage()));
-        }
+    public ResponseEntity<Listings> create(@RequestBody CreateListingsRequest createListingsRequest) {
+        Listings created = listingsService.createListing(createListingsRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // Méthode utilitaire pour format d'erreur de validation
-    private java.util.Map<String, Object> validationError(String field, String message) {
-        java.util.Map<String, Object> error = new java.util.HashMap<>();
-        error.put("code", "VALIDATION_ERROR");
-        error.put("message", "Données invalides");
-        java.util.Map<String, Object> details = new java.util.HashMap<>();
-        details.put(field, message);
-        error.put("details", details);
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
-        response.put("success", false);
-        response.put("error", error);
-        response.put("timestamp", java.time.Instant.now().toString());
-        return response;
-    }
-
-    @PutMapping("{id}/update")
-    public ResponseEntity<?> update(
-            @PathVariable UUID id,
-            @RequestBody UpdateListingsRequest updateRequest,
-            java.security.Principal principal
-    ) {
-        String email = principal.getName();
-        com.opossum.user.User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        try {
-            java.util.Map<String, Object> response = ListingsService.updateListing(id, updateRequest, user);
-            return ResponseEntity.ok(response);
-        } catch (com.opossum.listings.common.exceptions.ForbiddenException ex) {
-            return ResponseEntity.status(403).body(ex.getErrorBody());
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(validationError("validation", ex.getMessage()));
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(404).body(validationError("not_found", ex.getMessage()));
-        }
+    @PutMapping("/{id}/update")
+    public ResponseEntity<Listings> update(@PathVariable UUID id, @RequestBody UpdateListingsRequest updateListingsRequest) {
+        Optional<Listings> updated = listingsService.updateListing(id, updateListingsRequest);
+        return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}/delete")
-    public ResponseEntity<?> delete(@PathVariable UUID id, java.security.Principal principal) {
-        String email = principal.getName();
-        com.opossum.user.User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        try {
-            java.util.Map<String, Object> response = ListingsService.deleteListingAndBuildResponse(id, user);
-            return ResponseEntity.ok(response);
-        } catch (com.opossum.listings.common.exceptions.ForbiddenException ex) {
-            return ResponseEntity.status(403).body(ex.getErrorBody());
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(404).body(validationError("not_found", ex.getMessage()));
-        }
-    }
-
-
-    // Recherche avancée avec filtres multiples et pagination
-    @GetMapping("/advanced-search")
-    public ResponseEntity<?> advancedSearch(
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) Double latitude,
-            @RequestParam(required = false) Double longitude,
-            @RequestParam(required = false, defaultValue = "10") Double radius,
-            @RequestParam(required = false) String dateFrom,
-            @RequestParam(required = false) String dateTo,
-            @RequestParam(required = false, defaultValue = "relevance") String sortBy,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        // Délégation au service, qui gère la recherche avancée et le formatage de la réponse
-        java.util.Map<String, Object> response = ListingsService.advancedSearch(q, type, category, city, latitude, longitude, radius, dateFrom, dateTo, sortBy, page, size);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getListingDetails(@PathVariable UUID id, java.security.Principal principal) {
-        String email = principal != null ? principal.getName() : null;
-        java.util.Map<String, Object> response = ListingsService.getListingDetails(id, email);
-        if (Boolean.FALSE.equals(response.get("success"))) {
-            return ResponseEntity.status(404).body(response);
-        }
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        listingsService.deleteListing(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMyListings(
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            java.security.Principal principal
-    ) {
-        String username = principal.getName();
-        java.util.Map<String, Object> response = ListingsService.getMyListingsResponse(username, type, status, page, size);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<Listings>> getMyListings(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        List<Listings> listings = listingsService.getListingsByUser(user.getId());
+        return ResponseEntity.ok(listings);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<Listings>> search(@RequestParam String title) {
+        return ResponseEntity.ok(listingsService.searchListings(title));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Listings>> getAllListings() {
+        List<Listings> listings = listingsService.getAllListings();
+        return ResponseEntity.ok(listings);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Listings> getListingById(@PathVariable UUID id) {
+        return listingsService.getListingById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/listing/{listingId}/user")
+    public ResponseEntity<UserProfileResponse> getUserByListingId(@PathVariable UUID listingId) {
+        Optional<Listings> listingOpt = listingsService.getListingById(listingId);
+        if (listingOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        UUID userId = listingOpt.get().getUserId();
+        return userService.getUserById(userId)
+                .map(user -> ResponseEntity.ok(userService.mapToDto(user)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<Listings>> getListingsByStatus(@PathVariable ListingStatus status) {
+        List<Listings> listings = listingsService.getListingsByStatus(status);
+        return ResponseEntity.ok(listings);
+    }
 }

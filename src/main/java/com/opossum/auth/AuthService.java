@@ -20,6 +20,7 @@ import com.opossum.token.RefreshTokenService;
 import com.opossum.user.User;
 import com.opossum.user.UserRepository;
 
+
 import jakarta.transaction.Transactional;
 
 /**
@@ -143,14 +144,24 @@ public class AuthService {
     public void forgotPassword(String email) {
         // 1. Trouver l’utilisateur
         Optional<User> optionalUser = userRepository.findByEmail(email);
+        // 1. Trouver l’utilisateur
+        Optional<User> optionalUser = userRepository.findByEmail(email);
 
+        if (optionalUser.isEmpty()) {
+            // Pour ne pas divulguer si un compte existe ou pas : on ne dit rien
+            return;
+        }
         if (optionalUser.isEmpty()) {
             // Pour ne pas divulguer si un compte existe ou pas : on ne dit rien
             return;
         }
 
         User user = optionalUser.get();
+        User user = optionalUser.get();
 
+        // 2. Générer le token de reset
+        String resetToken = UUID.randomUUID().toString();
+        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30)); // valide 30 min
         // 2. Générer le token de reset
         String resetToken = UUID.randomUUID().toString();
         Instant expiresAt = Instant.now().plus(Duration.ofMinutes(30)); // valide 30 min
@@ -158,7 +169,11 @@ public class AuthService {
         // 3. Mettre à jour l’utilisateur
         user.setPasswordResetToken(resetToken);
         user.setPasswordResetExpiresAt(expiresAt);
+        // 3. Mettre à jour l’utilisateur
+        user.setPasswordResetToken(resetToken);
+        user.setPasswordResetExpiresAt(expiresAt);
 
+        userRepository.save(user);
         userRepository.save(user);
 
         // 4. Envoyer le lien de réinitialisation par email
@@ -168,13 +183,20 @@ public class AuthService {
     public void resetPassword(String token, String newPassword) {
         // 1. Vérifier que le token correspond à un utilisateur
         Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
+    public void resetPassword(String token, String newPassword) {
+        // 1. Vérifier que le token correspond à un utilisateur
+        Optional<User> optionalUser = userRepository.findByPasswordResetToken(token);
 
         if (optionalUser.isEmpty()) {
             throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Token invalide.");
         }
 
         User user = optionalUser.get();
+        User user = optionalUser.get();
 
+        // 2. Vérifier la date d’expiration
+        Instant now = Instant.now();
+        Instant expiresAt = user.getPasswordResetExpiresAt();
         // 2. Vérifier la date d’expiration
         Instant now = Instant.now();
         Instant expiresAt = user.getPasswordResetExpiresAt();
@@ -186,11 +208,19 @@ public class AuthService {
         // 3. Hacher le nouveau mot de passe
         String hashedPassword = passwordEncoder.encode(newPassword);
         user.setPasswordHash(hashedPassword);
+        // 3. Hacher le nouveau mot de passe
+        String hashedPassword = passwordEncoder.encode(newPassword);
+        user.setPasswordHash(hashedPassword);
 
         // 4. Supprimer les infos de reset
         user.setPasswordResetToken(null);
         user.setPasswordResetExpiresAt(null);
+        // 4. Supprimer les infos de reset
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiresAt(null);
 
+        // 5. Sauvegarder
+        userRepository.save(user);
         // 5. Sauvegarder
         userRepository.save(user);
 

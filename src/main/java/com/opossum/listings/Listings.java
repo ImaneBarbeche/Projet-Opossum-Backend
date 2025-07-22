@@ -13,7 +13,7 @@ import com.opossum.common.enums.AnnonceType;
 public class Listings {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
@@ -23,7 +23,7 @@ public class Listings {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2000)
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -61,6 +61,9 @@ public class Listings {
     private UUID userId;
 
     @Column(nullable = false)
+    private String city;
+
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(nullable = false)

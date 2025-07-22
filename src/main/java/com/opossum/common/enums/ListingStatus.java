@@ -1,9 +1,9 @@
 package com.opossum.common.enums;
 
 /**
- * Énumération des statuts d'annonce
+ * Énumération des statuts de liste
  */
-public enum AnnonceStatus {
+public enum ListingStatus {
     ACTIVE,
     RESOLVED,
     ARCHIVED,

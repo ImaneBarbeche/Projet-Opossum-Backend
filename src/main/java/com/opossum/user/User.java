@@ -10,11 +10,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 
+import com.opossum.common.enums.Role;
+
 /**
  * Entité représentant un utilisateur de l'application OPOSSUM.
  */
 @Entity
-@Table(name = "\"user\"") // table user en camelCase nécessite les guillemets
+@Table(name = "\"user\"") // Obligatoire pour Postgres / SQL sur le nom réservé user
 public class User implements UserDetails {
 
     @Id
@@ -22,7 +24,7 @@ public class User implements UserDetails {
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
@@ -120,7 +122,6 @@ public class User implements UserDetails {
         this.phone = phone;
     }
 
-    // Gardé comme dans la version principale
     public String getAvatar() {
         return avatar;
     }
@@ -130,9 +131,11 @@ public class User implements UserDetails {
     }
 
     public Role getRole() {
+    public Role getRole() {
         return role;
     }
 
+    public void setRole(Role role) {
     public void setRole(Role role) {
         this.role = role;
     }
@@ -209,9 +212,10 @@ public class User implements UserDetails {
         this.lastLoginAt = lastLoginAt;
     }
 
-    // === Implémentation de UserDetails (Spring Security) ===
+    // === Implémentation UserDetails (Spring Security) ===
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
