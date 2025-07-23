@@ -1,4 +1,3 @@
-
 // Package contenant les classes liées à l'utilisateur
 package com.opossum.user;
 
@@ -9,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.opossum.common.enums.Role;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,8 +20,9 @@ import java.util.UUID;
  */
 
 @Repository // Indique à Spring que cette interface est un bean de type repository
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, UUID>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<User> {
 
+    long countByRole(Role role);
 
     /**
      * Recherche un utilisateur par son token de vérification d'email
