@@ -371,4 +371,30 @@ public class AdminService {
         return ResponseEntity.ok(response);
     }
 
+    public ResponseEntity<?> unblockAnnouncement(String announcementId) {
+        String now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString();
+        java.util.Optional<com.opossum.listings.Listings> announcementOpt = listingsRepository.findById(java.util.UUID.fromString(announcementId));
+        if (announcementOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of(
+                "success", false,
+                "error", java.util.Map.of(
+                    "code", "ANNOUNCEMENT_NOT_FOUND",
+                    "message", "Annonce introuvable"),
+                "timestamp", now));
+        }
+        com.opossum.listings.Listings announcement = announcementOpt.get();
+        announcement.setStatus(com.opossum.common.enums.ListingStatus.ACTIVE);
+        listingsRepository.save(announcement);
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("announcementId", announcementId);
+        data.put("status", "ACTIVE");
+        data.put("unblockedAt", now);
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("data", data);
+        response.put("message", "Annonce débloquée avec succès");
+        response.put("timestamp", now);
+        return ResponseEntity.ok(response);
+    }
+
 }

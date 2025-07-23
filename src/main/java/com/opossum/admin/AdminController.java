@@ -1,4 +1,3 @@
-
 package com.opossum.admin;
 
 import org.springframework.web.bind.annotation.*;
@@ -76,6 +75,13 @@ public class AdminController {
             @PathVariable("announcementId") String announcementId,
             @RequestBody BlockAnnouncementRequest request) {
         return adminService.blockAnnouncement(announcementId, request);
+    }
+
+    // Endpoint pour débloquer une annonce
+    @PutMapping("/announcements/{announcementId}/unblock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> unblockAnnouncement(@PathVariable("announcementId") String announcementId) {
+        return adminService.unblockAnnouncement(announcementId);
     }
 
     // Endpoint pour supprimer (soft delete) une annonce
