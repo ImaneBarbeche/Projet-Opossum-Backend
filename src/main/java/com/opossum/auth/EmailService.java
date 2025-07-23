@@ -3,15 +3,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import java.io.ByteArrayOutputStream;
-import java.util.Base64;
 
 @Service
 
@@ -21,41 +12,25 @@ public class EmailService {
     @Value("${MAIL_FROM:noreply@opossum.fr}")
     private String fromEmail;
 
+    @Value("${FRONTEND_URL:http://localhost:8080}")
+    private String frontendUrl;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
-    private String generateQrCodeBase64(String data) {
-        try {
-            QRCodeWriter qrCodeWriter = new QRCodeWriter();
-            BitMatrix bitMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, 200, 200);
-            ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
-            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
-            byte[] pngData = pngOutputStream.toByteArray();
-            return Base64.getEncoder().encodeToString(pngData);
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du QR code", e);
-        }
-    }
-
-    public void sendVerificationEmail(String toEmail, String token) {
-        String verificationUrl = "opossum://verify-email/" + token;
+       public void sendVerificationEmail(String toEmail, String token) {
+        String verificationUrl = frontendUrl + "/api/v1/auth/verify?token=" + token;
         String subject = "Vérification de votre adresse email";
-        String qrBase64 = generateQrCodeBase64(verificationUrl);
-        String html = "<html><body>Bonjour,<br><br>Pour vérifier votre compte, scannez ce QR code avec l'application Opossum :<br><br>" +
-            "<img src='data:image/png;base64," + qrBase64 + "' alt='QR Code' style='width:200px;height:200px;'/>" +
-            "<br><br>L'équipe Opossum.</body></html>";
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(message);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Erreur lors de l'envoi de l'email de vérification", e);
-        }
+        String text = "Bonjour,\n\nMerci de cliquer sur ce lien pour vérifier votre compte :\n" + verificationUrl + "\n\nL'équipe Opossum.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
     }
 
     /**
@@ -99,27 +74,23 @@ public class EmailService {
 
         mailSender.send(message);
     }
-    public void sendResetPasswordEmail(String toEmail, String token) {
-        String resetUrl = "opossum://reset-password/" + token;
+
+       public void sendResetPasswordEmail(String toEmail, String token) {
+        String resetUrl = frontendUrl + "/reset-password.html?token=" + token;
         String subject = "Réinitialisation de votre mot de passe";
-        String qrBase64 = generateQrCodeBase64(resetUrl);
-        String html = "<html><body>Bonjour,<br><br>Pour réinitialiser votre mot de passe, scannez ce QR code avec l'application Opossum :<br><br>" +
-            "<img src='data:image/png;base64," + qrBase64 + "' alt='QR Code' style='width:200px;height:200px;'/>" +
-            "<br><br>Ou cliquez sur le bouton ci-dessous :<br><br>" +
-            "<a href='" + resetUrl + "' style='display:inline-block;padding:10px 20px;background:#1976d2;color:#fff;text-decoration:none;border-radius:4px;'>Réinitialiser mon mot de passe</a>" +
-            "<br><br>Ce lien et ce code sont valables 30 minutes.<br><br>L'équipe Opossum.</body></html>";
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(message);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Erreur lors de l'envoi de l'email de réinitialisation", e);
-        }
+        String text = "Bonjour,\n\nPour réinitialiser votre mot de passe, cliquez sur ce lien :\n" + resetUrl +
+            "\n\nSi le lien ne fonctionne pas, copiez ce code dans l'application :\n" + token +
+            "\n\nCe lien et ce code sont valables 30 minutes.\n\nL'équipe Opossum.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
     }
+
         /**
      * Envoie un email à l'auteur lorsqu'une annonce est archivée/bloquée par l'admin
      */
