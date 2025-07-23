@@ -42,19 +42,19 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
-
+  
     @Column(name = "is_active")
     private boolean isActive = true;
 
     @Column(name = "is_email_verified")
-    private boolean isEmailVerified; // rejouter = false pour que l'email ne soit pas vérifié par defaut
+    private boolean isEmailVerified; 
 
     @Column(name = "email_verification_token")
     private String emailVerificationToken;
 
     @Column(name = "email_verification_expires_at")
     private Instant emailVerificationExpiresAt;
-
+  
     @Column(name = "password_reset_token")
     private String passwordResetToken;
 

@@ -32,6 +32,9 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final EmailService emailService;
 
+    @org.springframework.beans.factory.annotation.Value("${FRONTEND_URL}")
+    private String frontendUrl;
+
     /**
      * Constructeur sans Lombok
      */

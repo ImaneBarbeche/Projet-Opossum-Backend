@@ -15,9 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import com.opossum.auth.dto.ForgotPasswordRequest;
 import com.opossum.auth.dto.ResetPasswordRequest;
-
 import com.opossum.auth.dto.RegisterRequest;
-
 /**
  * Contrôleur REST pour gérer l'authentification : - Inscription (register) -
  * Connexion (login)
@@ -292,6 +290,5 @@ public class AuthController {
                 "timestamp", java.time.Instant.now()
             ));
     }
-
 
 }
