@@ -21,7 +21,8 @@ public class AdminController {
         return adminService.getGlobalStats();
     }
 
-    // Endpoint pour lister les utilisateurs avec recherche, filtrage, pagination et tri
+    // Endpoint pour lister les utilisateurs avec recherche, filtrage, pagination et
+    // tri
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllUsers(
@@ -29,25 +30,32 @@ public class AdminController {
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
-            @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort
-    ) {
+            @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
         return adminService.getAllUsers(search, status, page, size, sort);
     }
-        // Endpoint pour bloquer un utilisateur
+
+    // Endpoint pour bloquer un utilisateur
     @PutMapping("/users/{userId}/block")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> blockUser(
             @PathVariable("userId") String userId,
-            @RequestBody BlockUserRequest request
-    ) {
+            @RequestBody BlockUserRequest request) {
         return adminService.blockUser(userId, request);
     }
-        // Endpoint pour supprimer définitivement un utilisateur
-    @DeleteMapping("/users/{userId}")
+    // Endpoint pour débloquer un utilisateur
+    @PutMapping("/users/{userId}/unblock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> unblockUser(@PathVariable("userId") String userId) {
+        return adminService.unblockUser(userId);
+    }
+
+    // Endpoint pour supprimer définitivement un utilisateur
+    @DeleteMapping("/users/{userId}/delete")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable("userId") String userId) {
         return adminService.deleteUser(userId);
     }
+
     // Endpoint pour lister toutes les annonces avec outils de modération
     @GetMapping("/announcements")
     @PreAuthorize("hasRole('ADMIN')")
@@ -57,22 +65,21 @@ public class AdminController {
             @RequestParam(value = "userId", required = false) String userId,
             @RequestParam(value = "reported", required = false) Boolean reported,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size
-    ) {
+            @RequestParam(value = "size", defaultValue = "20") int size) {
         return adminService.getAllAnnouncements(status, type, userId, reported, page, size);
     }
+
     // Endpoint pour bloquer une annonce
     @PutMapping("/announcements/{announcementId}/block")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> blockAnnouncement(
             @PathVariable("announcementId") String announcementId,
-            @RequestBody BlockAnnouncementRequest request
-    ) {
+            @RequestBody BlockAnnouncementRequest request) {
         return adminService.blockAnnouncement(announcementId, request);
     }
 
     // Endpoint pour supprimer (soft delete) une annonce
-    @DeleteMapping("/announcements/{announcementId}")
+    @DeleteMapping("/announcements/{announcementId}/delete")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> softDeleteAnnouncement(@PathVariable("announcementId") String announcementId) {
         return adminService.softDeleteAnnouncement(announcementId);

@@ -63,6 +63,10 @@ public class AuthService {
         }
 
         User user = optionalUser.get();
+        // Empêche la connexion si le compte est supprimé
+        if (user.getStatus() == com.opossum.common.enums.UserStatus.DELETED) {
+            throw new UnauthorizedException("Ce compte a été supprimé.");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Identifiants incorrects");

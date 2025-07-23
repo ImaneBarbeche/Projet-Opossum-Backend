@@ -1,4 +1,5 @@
 package com.opossum.admin;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import java.time.ZonedDateTime;
 import java.time.ZoneOffset;
@@ -15,6 +16,7 @@ public class AdminService {
 
     private final com.opossum.user.UserRepository userRepository;
     private final ListingsRepository listingsRepository;
+
     /**
      * Purge users and listings that have been soft deleted for over 1 year.
      * Runs daily at 2:00 AM UTC.
@@ -24,29 +26,35 @@ public class AdminService {
         ZonedDateTime threshold = ZonedDateTime.now(ZoneOffset.UTC).minusYears(1);
 
         // Purge users
-        List<com.opossum.user.User> usersToDelete = userRepository.findByStatusAndUpdatedAtBefore(UserStatus.DELETED, threshold.toInstant());
+        List<com.opossum.user.User> usersToDelete = userRepository.findByStatusAndUpdatedAtBefore(UserStatus.DELETED,
+                threshold.toInstant());
         for (com.opossum.user.User user : usersToDelete) {
             // Delete related listings
-    List<com.opossum.listings.Listings> userListings = listingsRepository.findByUserId(user.getId());
-    for (com.opossum.listings.Listings listing : userListings) {
-        listingsRepository.delete(listing);
-    }
-    userRepository.delete(user);
-    // Optionally log the deletion
-    // logger.info("Hard deleted user: {} at {}", user.getId(), ZonedDateTime.now(ZoneOffset.UTC));
-}
+            List<com.opossum.listings.Listings> userListings = listingsRepository.findByUserId(user.getId());
+            for (com.opossum.listings.Listings listing : userListings) {
+                listingsRepository.delete(listing);
+            }
+            userRepository.delete(user);
+            // Optionally log the deletion
+            // logger.info("Hard deleted user: {} at {}", user.getId(),
+            // ZonedDateTime.now(ZoneOffset.UTC));
+        }
 
         // Purge listings
-        List<com.opossum.listings.Listings> listingsToDelete = listingsRepository.findByStatusAndUpdatedAtBefore(com.opossum.common.enums.ListingStatus.DELETED, threshold.toInstant());
+        List<com.opossum.listings.Listings> listingsToDelete = listingsRepository
+                .findByStatusAndUpdatedAtBefore(com.opossum.common.enums.ListingStatus.DELETED, threshold.toInstant());
         for (com.opossum.listings.Listings listing : listingsToDelete) {
             listingsRepository.delete(listing);
             // Optionally log the deletion
-            // logger.info("Hard deleted listing: {} at {}", listing.getId(), ZonedDateTime.now(ZoneOffset.UTC));
+            // logger.info("Hard deleted listing: {} at {}", listing.getId(),
+            // ZonedDateTime.now(ZoneOffset.UTC));
         }
     }
+
     /**
      * AdminService constructor.
-     * @param userRepository User repository for accessing user data.
+     * 
+     * @param userRepository     User repository for accessing user data.
      * @param listingsRepository Listings repository for accessing listing data.
      */
     public AdminService(com.opossum.user.UserRepository userRepository, ListingsRepository listingsRepository) {
@@ -197,6 +205,36 @@ public class AdminService {
         response.put("success", true);
         response.put("data", data);
         response.put("message", "Utilisateur bloqué avec succès");
+        response.put("timestamp", now);
+        return ResponseEntity.ok(response);
+    }
+
+    
+    public ResponseEntity<?> unblockUser(String userId) {
+        String now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString();
+        java.util.Optional<com.opossum.user.User> userOpt = userRepository.findById(java.util.UUID.fromString(userId));
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                            "code", "USER_NOT_FOUND",
+                            "message", "Utilisateur introuvable"),
+                    "timestamp", now));
+        }
+        com.opossum.user.User user = userOpt.get();
+        user.setStatus(UserStatus.ACTIVE);
+        user.setBlockedUntil(null);
+        userRepository.save(user);
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("userId", userId);
+        data.put("status", "ACTIVE");
+        data.put("unblockedAt", now);
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("data", data);
+        response.put("message", "Utilisateur débloqué avec succès");
         response.put("timestamp", now);
         return ResponseEntity.ok(response);
     }
