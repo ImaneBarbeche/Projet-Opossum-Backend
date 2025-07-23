@@ -31,6 +31,8 @@ public class RefreshTokenService {
         // Supprime l’ancien token si existant
         refreshTokenRepository.deleteByUser_Id(user.getId());
 
+         String token = UUID.randomUUID().toString();
+
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(generateSecureToken());
@@ -81,6 +83,9 @@ public class RefreshTokenService {
      * Vérifie qu’un refresh token est authentique et retourne l'utilisateur s'il est valide.
      */
     public User verifyRefreshToken(String token) {
+
+        System.out.println("REFRESH TOKEN REÇU = " + token);
+
         RefreshToken refreshToken = refreshTokenRepository.findByTokenWithUser(token)
                 .orElseThrow(() -> new UnauthorizedException("Token invalide"));
 

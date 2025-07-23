@@ -1,4 +1,5 @@
 
+
 // DTO utilisé pour la requête de suppression de profil utilisateur
 package com.opossum.user.dto;
 

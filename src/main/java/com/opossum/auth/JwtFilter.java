@@ -45,21 +45,26 @@ public class JwtFilter extends OncePerRequestFilter {
             @org.springframework.lang.NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
+        System.out.println("[JwtFilter] FILTRE APPELÉ pour " + request.getRequestURI());
+
         // Récupère l'en-tête Authorization
         String authHeader = request.getHeader("Authorization");
 
         // Vérifie que l'en-tête est bien présent et commence par "Bearer "
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7); // Supprime "Bearer "
+            System.out.println("[JwtFilter] Token reçu : " + token);
 
             // Vérifie que le token est valide
             if (jwtUtil.isTokenValid(token)) {
                 UUID userId = jwtUtil.extractUserId(token);
+                System.out.println("[JwtFilter] userId extrait du token : " + userId);
 
                 // Vérifie que l'utilisateur existe en base
                 Optional<User> optionalUser = userRepository.findById(userId);
                 if (optionalUser.isPresent()) {
                     User user = optionalUser.get();
+                    System.out.println("[JwtFilter] User trouvé : id=" + user.getId() + ", email=" + user.getEmail());
 
                     // Crée l'objet d'authentification Spring Security
                     UsernamePasswordAuthenticationToken authentication =
@@ -75,7 +80,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
                     // Injecte l'utilisateur dans le contexte de sécurité
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    System.out.println("[JwtFilter] Aucun utilisateur trouvé pour l'userId : " + userId);
                 }
+            } else {
+                System.out.println("[JwtFilter] Token JWT invalide");
             }
         }
 

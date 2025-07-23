@@ -1,4 +1,5 @@
 
+
 // DTO utilisé pour représenter une erreur dans les réponses API
 package com.opossum.user.dto;
 

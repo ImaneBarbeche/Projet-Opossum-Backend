@@ -1,29 +1,32 @@
-package com.opossum.user;
+package com.opossum.user.dto;
 
 import java.util.UUID;
+import com.opossum.common.enums.Role;
 
 /**
  * DTO retourné à l'utilisateur connecté pour la route /me
  */
 public class UserProfileResponse {
+
     private UUID id;
     private String email;
     private String firstName;
     private String lastName;
     private String phone;
-    private String role;
+    private String avatar;
+    private Role role;
 
-    public UserProfileResponse(UUID id, String email, String firstName, String lastName, String phone, String role) {
+    public UserProfileResponse(UUID id, String email, String firstName, String lastName, String phone, String avatar, String role) {
         this.id = id;
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phone = phone;
-        this.role = role;
+        this.avatar = avatar;
+        this.role = Role.valueOf(role);
     }
 
     // Getters & setters
-
     public UUID getId() {
         return id;
     }
@@ -64,11 +67,19 @@ public class UserProfileResponse {
         this.phone = phone;
     }
 
-    public String getRole() {
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 }

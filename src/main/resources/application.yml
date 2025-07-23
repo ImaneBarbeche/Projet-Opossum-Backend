@@ -1,61 +1,62 @@
-###############################################################
-# Configuration principale de l'application Spring Boot
-###############################################################
 spring:
   application:
-    name: opossum-backend # Nom de l'application
+    name: opossum-backend
 
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev} # Profil actif (dev, prod, etc.)
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME} # URL de la base de données
-    username: ${DB_USERNAME} # Utilisateur DB
-    password: ${DB_PASSWORD} # Mot de passe DB
-    driver-class-name: org.postgresql.Driver # Driver JDBC
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:mydatabase}
+    username: ${DB_USERNAME:myuser}
+    password: ${DB_PASSWORD:mypassword}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update # Mise à jour automatique du schéma
-    show-sql: false # Affiche les requêtes SQL dans la console
+      ddl-auto: update
+    show-sql: false
     properties:
-     hibernate:
-        format_sql: true # Formatage lisible des requêtes SQL
-        dialect: org.hibernate.dialect.PostgreSQLDialect # Dialecte PostgreSQL
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         naming:
-          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl # Stratégie de nommage
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
-###############################################################
-# Configuration du serveur HTTP
-###############################################################
+  web:
+    resources:
+      add-mappings: true # Allow serving static resources from the classpath
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
 
 server:
-  port: 8080 # Port d'écoute du backend
+  port: 8080
+  address: 0.0.0.0
   servlet:
-    context-path: / # Chemin racine de l'API
+    context-path: /
   error:
-    include-stacktrace: always # Affiche la stacktrace dans les erreurs HTTP
-    include-message: always # Affiche le message d'erreur
+    include-stacktrace: always
+    include-message: always
 
-###############################################################
-# Configuration JWT (authentification par token)
-###############################################################
 jwt:
-  secret: ${JWT_SECRET} # Clé secrète pour signer les tokens
-  expiration: 86400000 # Durée de validité du token (24h en ms)
-
-###############################################################
-# Configuration de l'envoi d'emails
-###############################################################
+  secret: ${JWT_SECRET:mysecret}
+  expiration: 86400000 # 24 heures
 mail:
-  host: ${MAIL_HOST} # Serveur SMTP
-  port: ${MAIL_PORT} # Port SMTP
-  username: ${MAIL_USERNAME} # Identifiant SMTP
-  password: ${MAIL_PASSWORD} # Mot de passe SMTP
-  from: ${MAIL_FROM} # Adresse d'expédition
+  host: ${MAIL_HOST}
+  port: ${MAIL_PORT}
+  username: ${MAIL_USERNAME}
+  password: ${MAIL_PASSWORD}
+  from: ${MAIL_FROM}
 
-###############################################################
-# Configuration du stockage de fichiers
-###############################################################
 file:
-  upload-path: ${UPLOAD_PATH} # Chemin de stockage des fichiers uploadés
+upload-path: ${UPLOAD_PATH}

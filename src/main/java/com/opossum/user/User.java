@@ -4,17 +4,16 @@ import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
+import com.opossum.common.enums.Role;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
-
 /**
  * Entité représentant un utilisateur de l'application OPOSSUM.
  */
 @Entity
-@Table(name = "\"user\"") // table user en camelCase nécessite les guillemets
+@Table(name = "\"user\"") // Obligatoire pour Postgres / SQL sur le nom réservé user
 public class User implements UserDetails {
 
     @Id
@@ -22,7 +21,7 @@ public class User implements UserDetails {
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
@@ -37,21 +36,25 @@ public class User implements UserDetails {
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "avatar", length = 500) // Gardé comme dans la version principale
+    @Column(name = "avatar", length = 500) 
     private String avatar;
 
-    @Column(name = "role", nullable = false)
-    private String role;
-
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private Role role;
+  
     @Column(name = "is_active")
     private boolean isActive = true;
 
     @Column(name = "is_email_verified")
-    private boolean isEmailVerified = false;
+    private boolean isEmailVerified; 
 
     @Column(name = "email_verification_token")
     private String emailVerificationToken;
 
+    @Column(name = "email_verification_expires_at")
+    private Instant emailVerificationExpiresAt;
+  
     @Column(name = "password_reset_token")
     private String passwordResetToken;
 
@@ -116,7 +119,6 @@ public class User implements UserDetails {
         this.phone = phone;
     }
 
-    // Gardé comme dans la version principale
     public String getAvatar() {
         return avatar;
     }
@@ -125,11 +127,11 @@ public class User implements UserDetails {
         this.avatar = avatar;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
@@ -155,6 +157,14 @@ public class User implements UserDetails {
 
     public void setEmailVerificationToken(String emailVerificationToken) {
         this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public Instant getEmailVerificationExpiresAt() {
+        return emailVerificationExpiresAt;
+    }
+
+    public void setEmailVerificationExpiresAt(Instant emailVerificationExpiresAt) {
+        this.emailVerificationExpiresAt = emailVerificationExpiresAt;
     }
 
     public String getPasswordResetToken() {
@@ -197,10 +207,10 @@ public class User implements UserDetails {
         this.lastLoginAt = lastLoginAt;
     }
 
-    // === Implémentation de UserDetails (Spring Security) ===
+    // === Implémentation UserDetails (Spring Security) ===
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override

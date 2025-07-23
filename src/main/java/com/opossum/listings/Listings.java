@@ -1,70 +1,153 @@
+
 package com.opossum.listings;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import com.opossum.common.enums.ListingStatus;
+import com.opossum.common.enums.ListingType;
 
 @Entity
 @Table(name = "listings")
 public class Listings {
-
-    @Id
-    @GeneratedValue
-    private UUID id;
-
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
-    private String description;
-
-    @Column(nullable = false)
-    private boolean isLost;
-
-    @Column(nullable = false)
-    private UUID userId;
-
-    @Column(nullable = false)
-    private Instant createdAt;
-
-    @Column(nullable = false)
-    private Instant updatedAt;
-
-    public Listings() {
-    }
-
-    // getters
+    // ...existing fields...
     public UUID getId() {
         return id;
     }
 
-    public String getTitle() {
-        return title;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ListingStatus status = ListingStatus.ACTIVE;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false, length = 2000)
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ListingType type;
+
+    @Column(name = "category", length = 50, nullable = false)
+    private String category;
+
+    @Column(nullable = false)
+    private boolean isLost;
+
+    @Column(name = "latitude", precision = 10, scale = 8, nullable = true)
+    private BigDecimal latitude;
+
+    @Column(name = "longitude", precision = 11, scale = 8, nullable = true)
+    private BigDecimal longitude;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "city", length = 100, nullable = false)
+    private String city;
+
+    @Column(name = "photo_url", length = 500)
+    private String photoUrl;
+
+    @Column(name = "contact_phone", length = 20)
+    private String contactPhone;
+
+    @Column(name = "contact_email", length = 255)
+    private String contactEmail;
+
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 
-    public String getDescription() {
-        return description;
+    @Column(nullable = false)
+    private Instant updatedAt;
+
+    @Column(name = "resolved_at")
+    private Instant resolvedAt;
+
+    public Listings() {
     }
 
-    public boolean getIsLost() {
-        return isLost;
+    // setters
+
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public java.math.BigDecimal getLatitude() {
+        return latitude;
+    }
+
+    public java.math.BigDecimal getLongitude() {
+        return longitude;
+    }
+
+    public String getAddress() {
+        return address;
     }
 
     public UUID getUserId() {
         return userId;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
+    public String getCity() {
+        return city;
+    }
+
+    public ListingType getType() {
+        return type;
     }
 
     public Instant getUpdatedAt() {
         return updatedAt;
     }
 
+    public ListingStatus getStatus() {
+        return status;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public Instant getResolvedAt() {
+        return resolvedAt;
+    }
     // setters
+
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public void setTitle(String title) {
@@ -87,7 +170,60 @@ public class Listings {
         this.createdAt = createdAt;
     }
 
+    public void setType(ListingType type) {
+        this.type = type;
+    }
+
+    public void setLatitude(java.math.BigDecimal latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(java.math.BigDecimal longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public void setStatus(ListingStatus status) {
+        this.status = status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public boolean getIsLost() {
+        return isLost;
+    }
+
 }

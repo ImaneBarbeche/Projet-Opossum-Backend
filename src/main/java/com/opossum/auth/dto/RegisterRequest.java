@@ -54,18 +54,29 @@ public class RegisterRequest {
      */
     private String phone;
 
+
+    /**
+     * Avatar (optionnel)
+     * - Peut être null
+     * - URL directe vers une image
+     * - 500 caractères max
+     */
+    @Size(max = 500, message = "L'avatar ne peut excéder 500 caractères")
+    private String avatar;
+
     // ==== Constructeurs ====
 
     public RegisterRequest() {
         // Obligatoire pour la désérialisation automatique
     }
 
-    public RegisterRequest(String email, String password, String firstName, String lastName, String phone) {
+    public RegisterRequest(String email, String password, String firstName, String lastName, String phone, String avatar) {
         this.email = email;
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phone = phone;
+        this.avatar = avatar;
     }
 
     // ==== Getters et Setters ====
@@ -108,5 +119,13 @@ public class RegisterRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 }
