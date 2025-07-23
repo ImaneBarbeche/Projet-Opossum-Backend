@@ -33,8 +33,6 @@ public class AccountDeletionService {
      */
     @Transactional
     public ResponseEntity<?> deleteProfile(DeleteProfileRequest request, java.security.Principal principal) {
-        // DEBUG: log le mot de passe reçu (à retirer en prod)
-        System.out.println("[DEBUG] Password reçu pour suppression: '" + request.getPassword() + "'");
         if (principal == null || principal.getName() == null) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(
                 new DeleteProfileResponse(false, new ErrorResponse("UNAUTHORIZED", "Utilisateur non authentifié"), Instant.now())
@@ -46,7 +44,6 @@ public class AccountDeletionService {
                 new DeleteProfileResponse(false, new ErrorResponse("USER_NOT_FOUND", "Utilisateur introuvable"), Instant.now())
             );
         }
-        System.out.println("[DEBUG] Password hash stocké: '" + userOpt.get().getPasswordHash() + "'");
         User user = userOpt.get();
 
         if (request.getPassword() == null || request.getPassword().isBlank()) {
@@ -73,8 +70,6 @@ public class AccountDeletionService {
             );
         }
 
-        // Log de sécurité : suppression exécutée
-        System.out.println("[DEBUG] Suppression exécutée pour l'utilisateur : " + user.getEmail());
         // Suppression des données utilisateur (et potentiellement des tokens associés)
         refreshTokenService.deleteAllForUser(user.getId());
         userRepository.deleteById(user.getId());

@@ -42,7 +42,6 @@ public class AuthController {
         this.refreshTokenRepository = refreshTokenRepository;
         this.emailVerificationService = emailVerificationService;
         this.passwordResetService = passwordResetService;
-        System.out.println(">>> AuthController instancié !");
     }
 
     /**
@@ -92,7 +91,6 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        System.out.println(">>> Reçu : " + request.getEmail() + " / " + request.getPassword());
         try {
             AuthResponse response = authService.login(request);
             // Cookie sécurisé pour le web (Angular)

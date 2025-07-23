@@ -70,7 +70,6 @@ public class AuthService {
             throw new UnauthorizedException("Veuillez vérifier votre adresse email avant de vous connecter.");
         }
 
-        System.out.println("Connexion réussie pour : " + user.getEmail());
 
         return buildAuthResponse(user);
     }
@@ -117,10 +116,6 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-
-        System.out.println(">> check email en BDD : " + request.getEmail());
-        System.out.println(">> user trouvé : " + userRepository.findByEmail(request.getEmail()));
-        System.out.println(">> existsByEmail : " + userRepository.existsByEmail(request.getEmail()));
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email déjà utilisé");

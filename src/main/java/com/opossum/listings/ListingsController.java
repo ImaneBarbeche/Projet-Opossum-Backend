@@ -222,20 +222,6 @@ public class ListingsController {
         listingsService.save(l);
         // Build response
         try {
-            System.out.println("[ListingsController] Mapping update response: id=" + (l.getId() != null ? l.getId() : "null")
-                + ", title=" + (l.getTitle() != null ? l.getTitle() : "null")
-                + ", type=" + (l.getType() != null ? l.getType().name() : "null")
-                + ", category=" + (l.getCategory() != null ? l.getCategory() : "null")
-                + ", status=" + (l.getStatus() != null ? l.getStatus().name() : "null")
-                + ", createdAt=" + (l.getCreatedAt() != null ? l.getCreatedAt() : "null")
-                + ", updatedAt=" + (l.getUpdatedAt() != null ? l.getUpdatedAt() : "null")
-                + ", resolvedAt=" + (l.getResolvedAt() != null ? l.getResolvedAt() : "null")
-                + ", latitude=" + (l.getLatitude() != null ? l.getLatitude() : "null")
-                + ", longitude=" + (l.getLongitude() != null ? l.getLongitude() : "null")
-                + ", address=" + (l.getAddress() != null ? l.getAddress() : "null")
-                + ", city=" + (l.getCity() != null ? l.getCity() : "null")
-            );
-
             java.util.Map<String, Object> location = new java.util.HashMap<>();
             location.put("latitude", l.getLatitude() != null ? l.getLatitude().doubleValue() : null);
             location.put("longitude", l.getLongitude() != null ? l.getLongitude().doubleValue() : null);
@@ -263,8 +249,6 @@ public class ListingsController {
             response.put("timestamp", now);
             return ResponseEntity.ok(response);
         } catch (NullPointerException npe) {
-            System.out.println("[ListingsController] NullPointerException in update mapping: " + npe);
-            npe.printStackTrace();
             java.util.Map<String, Object> error = new java.util.HashMap<>();
             error.put("code", "INTERNAL_ERROR");
             error.put("message", "Un champ obligatoire est null dans la réponse de l'annonce modifiée.");
@@ -275,8 +259,6 @@ public class ListingsController {
             response.put("timestamp", java.time.Instant.now());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
-            System.out.println("[ListingsController] Exception dans le mapping de update: " + e);
-            e.printStackTrace();
             java.util.Map<String, Object> error = new java.util.HashMap<>();
             error.put("code", "INTERNAL_ERROR");
             error.put("message", e.getMessage() != null ? e.getMessage() : "");
@@ -387,20 +369,6 @@ public class ListingsController {
         }
         // Mapping réponse API (HashMap pour supporter les valeurs nulles) avec vérification et logs
         try {
-            System.out.println("[ListingsController] Mapping listing details: id=" + (l.getId() != null ? l.getId() : "null")
-                + ", title=" + (l.getTitle() != null ? l.getTitle() : "null")
-                + ", type=" + (l.getType() != null ? l.getType().name() : "null")
-                + ", category=" + (l.getCategory() != null ? l.getCategory() : "null")
-                + ", status=" + (l.getStatus() != null ? l.getStatus().name() : "null")
-                + ", createdAt=" + (l.getCreatedAt() != null ? l.getCreatedAt() : "null")
-                + ", updatedAt=" + (l.getUpdatedAt() != null ? l.getUpdatedAt() : "null")
-                + ", latitude=" + (l.getLatitude() != null ? l.getLatitude() : "null")
-                + ", longitude=" + (l.getLongitude() != null ? l.getLongitude() : "null")
-                + ", address=" + (l.getAddress() != null ? l.getAddress() : "null")
-                + ", city=" + (l.getCity() != null ? l.getCity() : "null")
-                + ", userId=" + (l.getUserId() != null ? l.getUserId() : "null")
-            );
-
             java.util.Map<String, Object> location = new java.util.HashMap<>();
             location.put("latitude", l.getLatitude() != null ? l.getLatitude().doubleValue() : null);
             location.put("longitude", l.getLongitude() != null ? l.getLongitude().doubleValue() : null);
@@ -437,8 +405,6 @@ public class ListingsController {
             response.put("timestamp", java.time.Instant.now());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.out.println("[ListingsController] Exception dans le mapping de getListingById: " + e);
-            e.printStackTrace();
             java.util.Map<String, Object> error = new java.util.HashMap<>();
             error.put("code", "INTERNAL_ERROR");
             error.put("message", e.getMessage() != null ? e.getMessage() : "");
@@ -487,7 +453,6 @@ public class ListingsController {
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
             @RequestParam(value = "size", required = false, defaultValue = "20") int size
     ) {
-        System.out.println("[ListingsController] @AuthenticationPrincipal user=" + user);
         if (user != null) System.out.println("[ListingsController] user.getId()=" + user.getId());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
@@ -518,13 +483,6 @@ public class ListingsController {
             // Mapping pour la vue mobile (id, title, type, category, status, createdAt, thumbnailUrl)
             List<java.util.Map<String, Object>> content = pageContent.stream().map(l -> {
                 try {
-                    System.out.println("[ListingsController] Mapping listing: id=" + l.getId()
-                        + ", title=" + l.getTitle()
-                        + ", type=" + (l.getType() != null ? l.getType().name() : "null")
-                        + ", category=" + l.getCategory()
-                        + ", status=" + (l.getStatus() != null ? l.getStatus().name() : "null")
-                        + ", createdAt=" + l.getCreatedAt()
-                    );
                     java.util.Map<String, Object> map = new java.util.HashMap<>();
                     map.put("id", l.getId());
                     map.put("title", l.getTitle());
@@ -535,15 +493,6 @@ public class ListingsController {
                     map.put("thumbnailUrl", null); // ou une logique adaptée si tu ajoutes ce champ plus tard
                     return map;
                 } catch (Exception e) {
-                    System.out.println("[ListingsController] Exception dans le mapping d'une annonce: " + e);
-                    e.printStackTrace();
-                    System.out.println("[ListingsController] Listing fields: id=" + l.getId()
-                        + ", title=" + l.getTitle()
-                        + ", type=" + (l.getType() != null ? l.getType().name() : "null")
-                        + ", category=" + l.getCategory()
-                        + ", status=" + (l.getStatus() != null ? l.getStatus().name() : "null")
-                        + ", createdAt=" + l.getCreatedAt()
-                    );
                     java.util.Map<String, Object> errorMap = new java.util.HashMap<>();
                     errorMap.put("id", l.getId());
                     errorMap.put("error", e.toString());
@@ -568,8 +517,6 @@ public class ListingsController {
                     )
             );
         } catch (Exception e) {
-            System.out.println("[ListingsController] Exception dans getMyListingsPaged: " + e);
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     java.util.Map.of(
                             "success", false,
@@ -665,15 +612,6 @@ public class ListingsController {
         // Mapping réponse (HashMap pour supporter les valeurs nulles)
         List<java.util.Map<String, Object>> result = filtered.stream().map(l -> {
             try {
-                System.out.println("[ListingsController] Mapping search result: id=" + (l.getId() != null ? l.getId() : "null")
-                    + ", title=" + (l.getTitle() != null ? l.getTitle() : "null")
-                    + ", type=" + (l.getType() != null ? l.getType().name() : "null")
-                    + ", category=" + (l.getCategory() != null ? l.getCategory() : "null")
-                    + ", status=" + (l.getStatus() != null ? l.getStatus().name() : "null")
-                    + ", city=" + (l.getCity() != null ? l.getCity() : "null")
-                    + ", address=" + (l.getAddress() != null ? l.getAddress() : "null")
-                    + ", created_at=" + (l.getCreatedAt() != null ? l.getCreatedAt() : "null")
-                );
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
                 map.put("id", l.getId() != null ? l.getId() : null);
                 map.put("title", l.getTitle() != null ? l.getTitle() : null);
@@ -686,8 +624,6 @@ public class ListingsController {
                 map.put("created_at", l.getCreatedAt() != null ? l.getCreatedAt() : null);
                 return map;
             } catch (Exception e) {
-                System.out.println("[ListingsController] Exception dans le mapping searchListingsV1: " + e);
-                e.printStackTrace();
                 java.util.Map<String, Object> errorMap = new java.util.HashMap<>();
                 errorMap.put("id", l.getId() != null ? l.getId() : null);
                 errorMap.put("error", e.toString());

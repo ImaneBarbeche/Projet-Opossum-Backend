@@ -84,8 +84,6 @@ public class RefreshTokenService {
      */
     public User verifyRefreshToken(String token) {
 
-        System.out.println("REFRESH TOKEN REÇU = " + token);
-
         RefreshToken refreshToken = refreshTokenRepository.findByTokenWithUser(token)
                 .orElseThrow(() -> new UnauthorizedException("Token invalide"));
 
