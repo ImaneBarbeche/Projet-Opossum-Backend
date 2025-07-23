@@ -6,7 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api/v1/admin")
 public class AdminController {
     private final AdminService adminService;
 
@@ -15,14 +15,14 @@ public class AdminController {
     }
 
     // Endpoint pour récupérer les statistiques globales
-    @GetMapping("/v1/admin/stats")
+    @GetMapping("/stats")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getGlobalStats() {
         return adminService.getGlobalStats();
     }
 
     // Endpoint pour lister les utilisateurs avec recherche, filtrage, pagination et tri
-    @GetMapping("/v1/admin/users")
+    @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllUsers(
             @RequestParam(value = "search", required = false) String search,
@@ -34,7 +34,7 @@ public class AdminController {
         return adminService.getAllUsers(search, status, page, size, sort);
     }
         // Endpoint pour bloquer un utilisateur
-    @PutMapping("/v1/admin/users/{userId}/block")
+    @PutMapping("/users/{userId}/block")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> blockUser(
             @PathVariable("userId") String userId,
@@ -43,13 +43,13 @@ public class AdminController {
         return adminService.blockUser(userId, request);
     }
         // Endpoint pour supprimer définitivement un utilisateur
-    @DeleteMapping("/v1/admin/users/{userId}")
+    @DeleteMapping("/users/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable("userId") String userId) {
         return adminService.deleteUser(userId);
     }
     // Endpoint pour lister toutes les annonces avec outils de modération
-    @GetMapping("/v1/admin/announcements")
+    @GetMapping("/announcements")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllAnnouncements(
             @RequestParam(value = "status", required = false) String status,
@@ -62,13 +62,20 @@ public class AdminController {
         return adminService.getAllAnnouncements(status, type, userId, reported, page, size);
     }
     // Endpoint pour bloquer une annonce
-    @PutMapping("/v1/admin/announcements/{announcementId}/block")
+    @PutMapping("/announcements/{announcementId}/block")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> blockAnnouncement(
             @PathVariable("announcementId") String announcementId,
             @RequestBody BlockAnnouncementRequest request
     ) {
         return adminService.blockAnnouncement(announcementId, request);
+    }
+
+    // Endpoint pour supprimer (soft delete) une annonce
+    @DeleteMapping("/announcements/{announcementId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> softDeleteAnnouncement(@PathVariable("announcementId") String announcementId) {
+        return adminService.softDeleteAnnouncement(announcementId);
     }
 
 }

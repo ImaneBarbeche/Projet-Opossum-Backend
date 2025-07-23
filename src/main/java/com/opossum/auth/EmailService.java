@@ -1,3 +1,4 @@
+
 package com.opossum.auth;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -78,6 +79,24 @@ public class EmailService {
         String text = "Bonjour,\n\nPour réinitialiser votre mot de passe, cliquez sur ce lien :\n" + resetUrl +
             "\n\nSi le lien ne fonctionne pas, copiez ce code dans l'application :\n" + token +
             "\n\nCe lien et ce code sont valables 30 minutes.\n\nL'équipe Opossum.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
+    }
+        /**
+     * Envoie un email à l'auteur lorsqu'une annonce est archivée/bloquée par l'admin
+     */
+    public void sendAnnouncementBlockedNotification(String toEmail, String firstName, String title, String reason, String moderationNotes) {
+        String subject = "Votre annonce a été archivée par l'équipe de modération";
+        String text = "Bonjour" + (firstName != null && !firstName.isBlank() ? " " + firstName : "") + ",\n\n" +
+                "Votre annonce \"" + title + "\" a été archivée par l'équipe de modération.\n" +
+                "Raison : " + reason + (moderationNotes != null && !moderationNotes.isBlank() ? "\nNotes de modération : " + moderationNotes : "") +
+                "\n\nSi vous pensez qu'il s'agit d'une erreur, contactez le support.\n\nL'équipe Opossum.";
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);

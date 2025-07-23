@@ -1,20 +1,34 @@
 package com.opossum.user;
 
+import com.opossum.common.enums.UserStatus;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.opossum.common.enums.Role;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
+
 /**
  * Entité représentant un utilisateur de l'application OPOSSUM.
  */
 @Entity
 @Table(name = "\"user\"") // Obligatoire pour Postgres / SQL sur le nom réservé user
 public class User implements UserDetails {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
 
     @Id
     @GeneratedValue
@@ -36,25 +50,25 @@ public class User implements UserDetails {
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "avatar", length = 500) 
+    @Column(name = "avatar", length = 500)
     private String avatar;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
-  
+
     @Column(name = "is_active")
     private boolean isActive = true;
 
     @Column(name = "is_email_verified")
-    private boolean isEmailVerified; 
+    private boolean isEmailVerified;
 
     @Column(name = "email_verification_token")
     private String emailVerificationToken;
 
     @Column(name = "email_verification_expires_at")
     private Instant emailVerificationExpiresAt;
-  
+
     @Column(name = "password_reset_token")
     private String passwordResetToken;
 
@@ -70,9 +84,19 @@ public class User implements UserDetails {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
+    private ZonedDateTime blockedUntil;
+
     // === Getters & Setters ===
     public UUID getId() {
         return id;
+    }
+
+    public ZonedDateTime getBlockedUntil() {
+        return blockedUntil;
+    }
+
+    public void setBlockedUntil(ZonedDateTime blockedUntil) {
+        this.blockedUntil = blockedUntil;
     }
 
     public void setId(UUID id) {

@@ -1,62 +1,107 @@
 package com.opossum.admin;
+import org.springframework.scheduling.annotation.Scheduled;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import com.opossum.common.enums.UserStatus;
 import com.opossum.listings.ListingsRepository;
-import java.util.UUID;
 import java.util.Map;
-import java.util.List;
 
 @Service
 public class AdminService {
+
     private final com.opossum.user.UserRepository userRepository;
     private final ListingsRepository listingsRepository;
+    /**
+     * Purge users and listings that have been soft deleted for over 1 year.
+     * Runs daily at 2:00 AM UTC.
+     */
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void purgeOldDeletedEntities() {
+        ZonedDateTime threshold = ZonedDateTime.now(ZoneOffset.UTC).minusYears(1);
 
-    @Autowired
+        // Purge users
+        List<com.opossum.user.User> usersToDelete = userRepository.findByStatusAndUpdatedAtBefore(UserStatus.DELETED, threshold.toInstant());
+        for (com.opossum.user.User user : usersToDelete) {
+            // Delete related listings
+    List<com.opossum.listings.Listings> userListings = listingsRepository.findByUserId(user.getId());
+    for (com.opossum.listings.Listings listing : userListings) {
+        listingsRepository.delete(listing);
+    }
+    userRepository.delete(user);
+    // Optionally log the deletion
+    // logger.info("Hard deleted user: {} at {}", user.getId(), ZonedDateTime.now(ZoneOffset.UTC));
+}
+
+        // Purge listings
+        List<com.opossum.listings.Listings> listingsToDelete = listingsRepository.findByStatusAndUpdatedAtBefore(com.opossum.common.enums.ListingStatus.DELETED, threshold.toInstant());
+        for (com.opossum.listings.Listings listing : listingsToDelete) {
+            listingsRepository.delete(listing);
+            // Optionally log the deletion
+            // logger.info("Hard deleted listing: {} at {}", listing.getId(), ZonedDateTime.now(ZoneOffset.UTC));
+        }
+    }
+    /**
+     * AdminService constructor.
+     * @param userRepository User repository for accessing user data.
+     * @param listingsRepository Listings repository for accessing listing data.
+     */
     public AdminService(com.opossum.user.UserRepository userRepository, ListingsRepository listingsRepository) {
         this.userRepository = userRepository;
         this.listingsRepository = listingsRepository;
     }
+
+    @Autowired
+    private com.opossum.auth.EmailService emailService;
 
     public ResponseEntity<?> getGlobalStats() {
         // Statistiques mockées pour l'exemple
         Map<String, Object> users = Map.of(
                 "total", 1250,
                 "active", 1100,
-                "newThisMonth", 85
-        );
+                "newThisMonth", 85);
         Map<String, Object> announcements = Map.of(
                 "total", 2340,
                 "active", 456,
                 "lost", 234,
                 "found", 222,
-                "resolvedThisMonth", 89
-        );
+                "resolvedThisMonth", 89);
         Map<String, Object> conversations = Map.of(
                 "total", 890,
-                "activeToday", 45
-        );
+                "activeToday", 45);
         Map<String, Object> files = Map.of(
                 "totalSize", "2.5GB",
-                "totalCount", 3456
-        );
+                "totalCount", 3456);
         Map<String, Object> data = Map.of(
                 "users", users,
                 "announcements", announcements,
                 "conversations", conversations,
-                "files", files
-        );
+                "files", files);
         Map<String, Object> response = Map.of(
                 "success", true,
                 "data", data,
-                "timestamp", java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString()
-        );
+                "timestamp", java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString());
         return ResponseEntity.ok(response);
     }
 
     public ResponseEntity<?> getAllUsers(String search, String status, int page, int size, String sort) {
         // Pagination et tri
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sort.replace(",", " ").split(" ")));
+        org.springframework.data.domain.Pageable pageable;
+        if (sort != null && sort.contains(",")) {
+            String[] sortParts = sort.split(",");
+            String sortField = sortParts[0];
+            String sortDir = sortParts.length > 1 ? sortParts[1] : "asc";
+            org.springframework.data.domain.Sort.Direction direction = sortDir.equalsIgnoreCase("desc")
+                    ? org.springframework.data.domain.Sort.Direction.DESC
+                    : org.springframework.data.domain.Sort.Direction.ASC;
+            pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                    org.springframework.data.domain.Sort.by(direction, sortField));
+        } else {
+            pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        }
 
         // Recherche et filtrage dynamique
         org.springframework.data.jpa.domain.Specification<com.opossum.user.User> spec = (root, query, cb) -> {
@@ -66,19 +111,19 @@ public class AdminService {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("firstName")), like),
                         cb.like(cb.lower(root.get("lastName")), like),
-                        cb.like(cb.lower(root.get("email")), like)
-                ));
+                        cb.like(cb.lower(root.get("email")), like)));
             }
             if (status != null) {
-                if (status.equalsIgnoreCase("ACTIVE")) predicates.add(cb.isTrue(root.get("isActive")));
-                else if (status.equalsIgnoreCase("BLOCKED")) predicates.add(cb.isFalse(root.get("isActive")));
+                if (status.equalsIgnoreCase("ACTIVE"))
+                    predicates.add(cb.isTrue(root.get("isActive")));
+                else if (status.equalsIgnoreCase("BLOCKED"))
+                    predicates.add(cb.isFalse(root.get("isActive")));
                 // Ajout d'autres statuts si besoin
             }
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
 
-        org.springframework.data.domain.Page<com.opossum.user.User> userPage =
-            userRepository.findAll(spec, pageable);
+        org.springframework.data.domain.Page<com.opossum.user.User> userPage = userRepository.findAll(spec, pageable);
 
         java.util.List<java.util.Map<String, Object>> content = new java.util.ArrayList<>();
         for (com.opossum.user.User user : userPage.getContent()) {
@@ -104,17 +149,14 @@ public class AdminService {
                 "number", userPage.getNumber(),
                 "size", userPage.getSize(),
                 "totalElements", userPage.getTotalElements(),
-                "totalPages", userPage.getTotalPages()
-        );
+                "totalPages", userPage.getTotalPages());
         java.util.Map<String, Object> data = java.util.Map.of(
                 "content", content,
-                "page", pageInfo
-        );
+                "page", pageInfo);
         java.util.Map<String, Object> response = java.util.Map.of(
                 "success", true,
                 "data", data,
-                "timestamp", java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString()
-        );
+                "timestamp", java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString());
         return ResponseEntity.ok(response);
     }
 
@@ -123,16 +165,23 @@ public class AdminService {
         java.util.Optional<com.opossum.user.User> userOpt = userRepository.findById(java.util.UUID.fromString(userId));
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(404).body(java.util.Map.of(
-                "success", false,
-                "error", java.util.Map.of(
-                    "code", "USER_NOT_FOUND",
-                    "message", "Utilisateur introuvable"
-                ),
-                "timestamp", now
-            ));
+                    "success", false,
+                    "error", java.util.Map.of(
+                            "code", "USER_NOT_FOUND",
+                            "message", "Utilisateur introuvable"),
+                    "timestamp", now));
         }
         com.opossum.user.User user = userOpt.get();
-        user.setActive(false);
+        user.setStatus(UserStatus.BLOCKED);
+
+        // Handle duration for temporary block
+        java.time.ZonedDateTime blockedUntil = null;
+        if (request.duration != null && request.duration > 0) {
+            blockedUntil = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).plusDays(request.duration);
+            user.setBlockedUntil(blockedUntil);
+        } else {
+            user.setBlockedUntil(null); // Permanent block
+        }
         userRepository.save(user);
 
         java.util.Map<String, Object> data = new java.util.HashMap<>();
@@ -140,7 +189,9 @@ public class AdminService {
         data.put("status", "BLOCKED");
         data.put("blockedAt", now);
         data.put("blockReason", request.reason);
-        // Optionnel: gérer la durée de blocage (champ à ajouter si besoin)
+        if (blockedUntil != null) {
+            data.put("unblockAt", blockedUntil.toString());
+        }
 
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("success", true);
@@ -149,28 +200,35 @@ public class AdminService {
         response.put("timestamp", now);
         return ResponseEntity.ok(response);
     }
+
     public ResponseEntity<?> deleteUser(String userId) {
         String now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString();
         java.util.Optional<com.opossum.user.User> userOpt = userRepository.findById(java.util.UUID.fromString(userId));
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(404).body(java.util.Map.of(
-                "success", false,
-                "error", java.util.Map.of(
-                    "code", "USER_NOT_FOUND",
-                    "message", "Utilisateur introuvable"
-                ),
-                "timestamp", now
-            ));
+                    "success", false,
+                    "error", java.util.Map.of(
+                            "code", "USER_NOT_FOUND",
+                            "message", "Utilisateur introuvable"),
+                    "timestamp", now));
         }
-        userRepository.deleteById(java.util.UUID.fromString(userId));
+        com.opossum.user.User user = userOpt.get();
+        user.setStatus(UserStatus.DELETED);
+        userRepository.save(user);
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("userId", userId);
+        data.put("status", "DELETED");
+        data.put("deletedAt", now);
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("success", true);
-        response.put("message", "Compte utilisateur supprimé définitivement");
+        response.put("data", data);
+        response.put("message", "Compte utilisateur supprimé (soft delete) avec succès");
         response.put("timestamp", now);
         return ResponseEntity.ok(response);
     }
 
-    public ResponseEntity<?> getAllAnnouncements(String status, String type, String userId, Boolean reported, int page, int size) {
+    public ResponseEntity<?> getAllAnnouncements(String status, String type, String userId, Boolean reported, int page,
+            int size) {
         // Exemple d'annonce mockée
         java.util.Map<String, Object> author = new java.util.HashMap<>();
         author.put("id", "550e8400-e29b-41d4-a716-446655440001");
@@ -194,33 +252,85 @@ public class AdminService {
                 "number", page,
                 "size", size,
                 "totalElements", 1,
-                "totalPages", 1
-        );
+                "totalPages", 1);
         java.util.Map<String, Object> data = java.util.Map.of(
                 "content", content,
-                "page", pageInfo
-        );
+                "page", pageInfo);
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("success", true);
         response.put("data", data);
         response.put("timestamp", java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString());
         return ResponseEntity.ok(response);
     }
-    
+
     public ResponseEntity<?> blockAnnouncement(String announcementId, BlockAnnouncementRequest request) {
         String now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString();
+        java.util.Optional<com.opossum.listings.Listings> announcementOpt = listingsRepository
+                .findById(java.util.UUID.fromString(announcementId));
+        if (announcementOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                            "code", "ANNOUNCEMENT_NOT_FOUND",
+                            "message", "Annonce introuvable"),
+                    "timestamp", now));
+        }
+        com.opossum.listings.Listings announcement = announcementOpt.get();
+        announcement.setStatus(com.opossum.common.enums.ListingStatus.ARCHIVED);
+        listingsRepository.save(announcement);
+
+        // Notifier l'auteur par email
+        com.opossum.user.User author = announcement.getUser();
+        if (author != null) {
+            // EmailService doit être injecté dans AdminService
+            emailService.sendAnnouncementBlockedNotification(
+                    author.getEmail(),
+                    author.getFirstName(),
+                    announcement.getTitle(),
+                    request.reason,
+                    request.moderationNotes);
+        }
+
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("announcementId", announcementId);
-        data.put("status", "BLOCKED");
-        data.put("blockedAt", now);
+        data.put("status", "ARCHIVED");
+        data.put("archivedAt", now);
         data.put("blockReason", request.reason);
         data.put("moderationNotes", request.moderationNotes != null ? request.moderationNotes : "");
 
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("success", true);
         response.put("data", data);
-        response.put("message", "Annonce bloquée avec succès");
+        response.put("message", "Annonce archivée (bloquée) avec succès");
         response.put("timestamp", now);
         return ResponseEntity.ok(response);
     }
+
+    public ResponseEntity<?> softDeleteAnnouncement(String announcementId) {
+        String now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).toString();
+        java.util.Optional<com.opossum.listings.Listings> announcementOpt = listingsRepository
+                .findById(java.util.UUID.fromString(announcementId));
+        if (announcementOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of(
+                    "success", false,
+                    "error", java.util.Map.of(
+                            "code", "ANNOUNCEMENT_NOT_FOUND",
+                            "message", "Annonce introuvable"),
+                    "timestamp", now));
+        }
+        com.opossum.listings.Listings announcement = announcementOpt.get();
+        announcement.setStatus(com.opossum.common.enums.ListingStatus.DELETED);
+        listingsRepository.save(announcement);
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("announcementId", announcementId);
+        data.put("status", "DELETED");
+        data.put("deletedAt", now);
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("data", data);
+        response.put("message", "Annonce supprimée (soft delete) avec succès");
+        response.put("timestamp", now);
+        return ResponseEntity.ok(response);
+    }
+
 }

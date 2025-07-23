@@ -11,10 +11,10 @@ import com.opossum.common.enums.ListingType;
 @Entity
 @Table(name = "listings")
 public class Listings {
-    // ...existing fields...
-    public UUID getId() {
-        return id;
-    }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private com.opossum.user.User user;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -83,10 +83,14 @@ public class Listings {
     public Listings() {
     }
 
-    // setters
+    // getters
 
-    public void setResolvedAt(Instant resolvedAt) {
-        this.resolvedAt = resolvedAt;
+    public com.opossum.user.User getUser() {
+        return user;
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public String getCategory() {
@@ -140,7 +144,28 @@ public class Listings {
     public Instant getResolvedAt() {
         return resolvedAt;
     }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public boolean getIsLost() {
+        return isLost;
+    }
+
     // setters
+
+    public void setUser(com.opossum.user.User user) {
+        this.user = user;
+    }
 
     public void setId(UUID id) {
         this.id = id;
@@ -210,20 +235,8 @@ public class Listings {
         this.status = status;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public boolean getIsLost() {
-        return isLost;
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
     }
 
 }

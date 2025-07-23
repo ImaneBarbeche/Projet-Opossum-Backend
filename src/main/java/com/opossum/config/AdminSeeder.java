@@ -25,7 +25,9 @@ public class AdminSeeder implements CommandLineRunner {
             admin.setPasswordHash(passwordEncoder.encode("adminPassword"));
             admin.setRole(Role.ADMIN);
             admin.setActive(true);
-            // Ajoute les autres champs obligatoires si besoin
+            admin.setFirstName("Admin");
+            admin.setLastName("Opossum");
+            admin.setEmailVerified(true); 
             userRepository.save(admin);
             System.out.println("Admin user created.");
         }
