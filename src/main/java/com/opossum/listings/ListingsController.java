@@ -1,7 +1,5 @@
 package com.opossum.listings;
 import com.opossum.common.utils.ResponseUtil;
-import java.util.stream.Collectors;
-import com.opossum.listings.ListingsMapper;
 import com.opossum.common.enums.ListingType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import com.opossum.common.enums.UserStatus;
 import com.opossum.listings.ListingsRepository;
@@ -60,9 +59,6 @@ public class AdminService {
         this.userRepository = userRepository;
         this.listingsRepository = listingsRepository;
     }
-
-    @Autowired
-    private com.opossum.auth.EmailService emailService;
 
     public ResponseEntity<?> getGlobalStats() {
         // Statistiques mockées pour l'exemple

@@ -4,7 +4,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import com.opossum.admin.user.UserAdminService;
-import com.opossum.admin.ListingsAdminService;
 
 @RestController
 @RequestMapping("/api/v1/admin")
