@@ -1,4 +1,3 @@
-
 package com.opossum.file;
 
 /**
@@ -12,5 +11,6 @@ import java.util.UUID;
 @Repository
 public interface FileRepository extends JpaRepository<FileEntity, UUID> {
     Optional<FileEntity> findByStoredName(String storedName);
-    // Ajoute d'autres méthodes personnalisées si besoin
+    // Trouver les fichiers soft-deleted depuis plus d'un an
+    java.util.List<FileEntity> findByIsDeletedAndCreatedAtBefore(boolean isDeleted, java.time.Instant before);
 }

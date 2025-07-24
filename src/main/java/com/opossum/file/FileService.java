@@ -1,21 +1,13 @@
 package com.opossum.file;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
-import java.io.IOException;
 
 /**
  * Service métier pour la gestion des fichiers
@@ -29,7 +21,6 @@ public class FileService {
     private final FileRepository fileRepository;
     private final Cloudinary cloudinary;
 
-    @Autowired
     public FileService(FileRepository fileRepository, Cloudinary cloudinary) {
         this.fileRepository = fileRepository;
         this.cloudinary = cloudinary;
@@ -40,7 +31,7 @@ public ResponseEntity<?> uploadFile(MultipartFile file, java.util.UUID uploadedB
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body("Aucun fichier envoyé");
         }
-        String originalName = StringUtils.cleanPath(file.getOriginalFilename());
+        // originalName inutilisé, supprimé
         String mimeType = file.getContentType();
         long fileSize = file.getSize();
         // Types autorisés
@@ -51,15 +42,10 @@ public ResponseEntity<?> uploadFile(MultipartFile file, java.util.UUID uploadedB
         if (fileSize > 10 * 1024 * 1024) {
             return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("Le fichier dépasse la taille maximum autorisée (10MB)");
         }
-
-        // 2. Génération d'un nom unique
-        String extension = StringUtils.getFilenameExtension(originalName);
-        String storedName = UUID.randomUUID().toString() + (extension != null ? "." + extension : "");
-
-        // 3. Stockage sur disque
         
     try {
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
         String url = (String) uploadResult.get("secure_url");
 
         FileEntity entity = new FileEntity();
@@ -124,5 +110,16 @@ public ResponseEntity<?> uploadFile(MultipartFile file, java.util.UUID uploadedB
         entity.setDeleted(true);
         fileRepository.save(entity);
         return ResponseEntity.ok().body("Fichier supprimé (soft delete)");
+    }
+    
+    /**
+     * Supprime physiquement un fichier sur Cloudinary à partir du public_id (storedName)
+     */
+    public void deleteFromCloudinary(String publicId) {
+        try {
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+        } catch (Exception e) {
+            // Log ou gestion d'erreur si besoin
+        }
     }
 }
