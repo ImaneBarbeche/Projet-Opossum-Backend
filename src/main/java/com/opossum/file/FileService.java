@@ -42,10 +42,17 @@ public ResponseEntity<?> uploadFile(MultipartFile file, java.util.UUID uploadedB
         if (fileSize > 10 * 1024 * 1024) {
             return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("Le fichier dépasse la taille maximum autorisée (10MB)");
         }
-        
+
     try {
+        // Transformation Cloudinary : compression automatique et format optimisé
         @SuppressWarnings("unchecked")
-        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(
+            file.getBytes(),
+            ObjectUtils.asMap(
+                "quality", "auto",
+                "fetch_format", "auto"
+            )
+        );
         String url = (String) uploadResult.get("secure_url");
 
         FileEntity entity = new FileEntity();
