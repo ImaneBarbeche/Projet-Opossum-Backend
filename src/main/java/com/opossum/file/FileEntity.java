@@ -73,8 +73,6 @@ public class FileEntity {
         this.storedName = storedName;
     }
 
-
-
     public String getUrl() {
         return url;
     }

@@ -65,20 +65,20 @@ public ResponseEntity<?> uploadFile(MultipartFile file, java.util.UUID uploadedB
         entity.setUploadedBy(uploadedBy);
         fileRepository.save(entity);
 
-        // Réponse enrichie
-        Map<String, Object> response = Map.of(
-            "id", entity.getId(),
-            "url", entity.getUrl(),
-            "thumbnailUrl", entity.getThumbnailUrl(),
-            "originalName", entity.getOriginalName(),
-            "storedName", entity.getStoredName(),
-            "mimeType", entity.getMimeType(),
-            "fileSize", entity.getFileSize(),
-            "uploadedBy", entity.getUploadedBy(),
-            "createdAt", entity.getCreatedAt()
-        );
+        // Réponse enrichie (null-safe)
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("id", entity.getId());
+        response.put("url", entity.getUrl());
+        response.put("thumbnailUrl", entity.getThumbnailUrl());
+        response.put("originalName", entity.getOriginalName());
+        response.put("storedName", entity.getStoredName());
+        response.put("mimeType", entity.getMimeType());
+        response.put("fileSize", entity.getFileSize());
+        response.put("uploadedBy", entity.getUploadedBy());
+        response.put("createdAt", entity.getCreatedAt());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } catch (Exception e) {
+        e.printStackTrace(); // ou logger.error("Erreur upload Cloudinary", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l'upload Cloudinary");
     }
 }

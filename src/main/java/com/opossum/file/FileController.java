@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/v1/files")
@@ -26,6 +27,9 @@ public class FileController {
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file, @org.springframework.security.core.annotation.AuthenticationPrincipal com.opossum.user.User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non authentifié");
+        }
         // Passe l'ID utilisateur au service
         return fileService.uploadFile(file, currentUser != null ? currentUser.getId() : null);
     }

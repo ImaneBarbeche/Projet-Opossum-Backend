@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.opossum.file.FileRepository;
-import com.opossum.file.FileEntity;
 import java.time.Instant;
 
 @Service
