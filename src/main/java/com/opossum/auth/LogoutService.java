@@ -1,5 +1,4 @@
 package com.opossum.auth;
-
 import com.opossum.token.RefreshTokenRepository;
 import com.opossum.token.RefreshTokenService;
 import com.opossum.token.RefreshToken;
@@ -8,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 
+@Service
 public class LogoutService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
