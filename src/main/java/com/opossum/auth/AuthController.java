@@ -33,6 +33,7 @@ public class AuthController {
         this.authService = authService;
         this.emailVerificationService = emailVerificationService;
         this.passwordResetService = passwordResetService;
+        this.logoutService = logoutService;
     }
 
     /**
@@ -58,6 +59,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        System.out.println(">>> Reçu : " + request.getEmail() + " / " + request.getPassword());
         try {
             AuthResponse response = authService.login(request);
             ResponseCookie cookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
