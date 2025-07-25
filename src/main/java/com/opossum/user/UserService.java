@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.opossum.token.RefreshTokenService;
 import com.opossum.user.dto.UpdateProfileRequest;
 import com.opossum.user.dto.UserDto;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.opossum.user.dto.DeleteProfileRequest;
 
 @Service
@@ -43,7 +42,6 @@ public class UserService {
     private final AccountDeletionService accountDeletionService;
     private final PasswordService passwordService;
 
-    @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService, EmailService emailService, ProfileService profileService, AccountDeletionService accountDeletionService, PasswordService passwordService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;

@@ -5,6 +5,8 @@ import java.util.UUID;
 import com.opossum.common.enums.ListingStatus;
 import com.opossum.common.enums.ListingType;
 
+import java.util.List;
+
 public class UpdateListingsRequest {
 
     private String title;
@@ -17,6 +19,14 @@ public class UpdateListingsRequest {
     private String address;
     private String city;
     private UUID userId;
+    private List<UUID> fileIds;
+    public List<UUID> getFileIds() {
+        return fileIds;
+    }
+
+    public void setFileIds(List<UUID> fileIds) {
+        this.fileIds = fileIds;
+    }
 
 
     public UpdateListingsRequest() {

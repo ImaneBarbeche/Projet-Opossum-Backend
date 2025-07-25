@@ -27,14 +27,13 @@ public class AuthService {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    // private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final EmailService emailService;
 
-    /**
-     * Constructeur sans Lombok
-     */
+    @org.springframework.beans.factory.annotation.Value("${FRONTEND_URL}")
+    private String frontendUrl;
+
     public AuthService(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
@@ -43,7 +42,6 @@ public class AuthService {
             EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        // this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
         this.emailService = emailService;
@@ -60,6 +58,10 @@ public class AuthService {
         }
 
         User user = optionalUser.get();
+        // Empêche la connexion si le compte est supprimé
+        if (user.getStatus() == com.opossum.common.enums.UserStatus.DELETED) {
+            throw new UnauthorizedException("Ce compte a été supprimé.");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Identifiants incorrects");

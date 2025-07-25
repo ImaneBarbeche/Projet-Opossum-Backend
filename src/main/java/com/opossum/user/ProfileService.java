@@ -5,14 +5,17 @@ import com.opossum.user.dto.UserDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.opossum.file.FileRepository;
 import java.time.Instant;
 
 @Service
 public class ProfileService {
     private final UserRepository userRepository;
+    private final FileRepository fileRepository;
 
-    public ProfileService(UserRepository userRepository) {
+    public ProfileService(UserRepository userRepository, FileRepository fileRepository) {
         this.userRepository = userRepository;
+        this.fileRepository = fileRepository;
     }
 
     /**
@@ -151,6 +154,19 @@ public class ProfileService {
             changed = true;
         }
         if (request.getAvatar() != null && !request.getAvatar().isBlank()) {
+            // Suppression de l'ancien avatar si différent
+            String oldAvatar = user.getAvatar();
+            if (oldAvatar != null && !oldAvatar.isBlank() && !oldAvatar.equals(request.getAvatar())) {
+                // On suppose que le champ avatar contient l'URL Cloudinary
+                // On cherche le FileEntity correspondant à cette URL
+                fileRepository.findAll().stream()
+                    .filter(f -> oldAvatar.equals(f.getUrl()))
+                    .findFirst()
+                    .ifPresent(f -> {
+                        f.setDeleted(true);
+                        fileRepository.save(f);
+                    });
+            }
             user.setAvatar(request.getAvatar());
             changed = true;
         }

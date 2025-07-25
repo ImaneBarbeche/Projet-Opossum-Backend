@@ -30,9 +30,7 @@ public class RefreshTokenService {
     public String createRefreshToken(User user) {
         // Supprime l’ancien token si existant
         refreshTokenRepository.deleteByUser_Id(user.getId());
-
-         String token = UUID.randomUUID().toString();
-
+        // Crée un nouveau token
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(generateSecureToken());
