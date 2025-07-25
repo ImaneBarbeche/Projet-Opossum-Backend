@@ -1,6 +1,7 @@
 package com.opossum.listings.dto;
 
 import java.util.List;
+import java.util.UUID;
 
 public class CreateListingsRequest {
     private String title;
@@ -9,7 +10,7 @@ public class CreateListingsRequest {
     private String category;
     private Location location;
     private ContactInfo contactInfo;
-    private List<String> photos;
+    private List<UUID> fileIds;
 
     // --- Nested DTOs ---
     public static class Location {
@@ -123,12 +124,12 @@ public class CreateListingsRequest {
         this.contactInfo = contactInfo;
     }
 
-    public List<String> getPhotos() {
-        return photos;
+    public List<UUID> getFileIds() {
+        return fileIds;
     }
 
-    public void setPhotos(List<String> photos) {
-        this.photos = photos;
+    public void setFileIds(List<UUID> fileIds) {
+        this.fileIds = fileIds;
     }
 
 }

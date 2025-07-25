@@ -1,20 +1,21 @@
-
 package com.opossum.listings;
-
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import com.opossum.common.enums.ListingStatus;
 import com.opossum.common.enums.ListingType;
+import com.opossum.file.FileEntity;
 
 @Entity
 @Table(name = "listings")
 public class Listings {
-    // ...existing fields...
-    public UUID getId() {
-        return id;
-    }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private com.opossum.user.User user;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,44 +24,45 @@ public class Listings {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ListingStatus status = ListingStatus.ACTIVE;
-
+    
     @Column(nullable = false)
     private String title;
-
+    
     @Column(nullable = false, length = 2000)
     private String description;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ListingType type;
-
+    
     @Column(name = "category", length = 50, nullable = false)
     private String category;
-
+    
     @Column(nullable = false)
     private boolean isLost;
-
+    
     @Column(name = "latitude", precision = 10, scale = 8, nullable = true)
     private BigDecimal latitude;
-
+    
     @Column(name = "longitude", precision = 11, scale = 8, nullable = true)
     private BigDecimal longitude;
-
+    
     @Column(name = "address")
     private String address;
-
+    
     @Column(name = "city", length = 100, nullable = false)
     private String city;
-
-    @Column(name = "photo_url", length = 500)
-    private String photoUrl;
-
+    
+    @ManyToMany
+    @JoinTable(name = "listing_files", joinColumns = @JoinColumn(name = "listing_id"), inverseJoinColumns = @JoinColumn(name = "file_id"))
+    private List<FileEntity> images = new ArrayList<>();
+    
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
 
     @Column(name = "contact_email", length = 255)
     private String contactEmail;
-
+    
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
@@ -83,10 +85,14 @@ public class Listings {
     public Listings() {
     }
 
-    // setters
+    // getters
 
-    public void setResolvedAt(Instant resolvedAt) {
-        this.resolvedAt = resolvedAt;
+    public com.opossum.user.User getUser() {
+        return user;
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public String getCategory() {
@@ -125,9 +131,9 @@ public class Listings {
         return status;
     }
 
-    public String getPhotoUrl() {
-        return photoUrl;
-    }
+    public List<FileEntity> getImages() {
+    return images;
+}
 
     public String getContactPhone() {
         return contactPhone;
@@ -140,7 +146,28 @@ public class Listings {
     public Instant getResolvedAt() {
         return resolvedAt;
     }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public boolean getIsLost() {
+        return isLost;
+    }
+
     // setters
+
+    public void setUser(com.opossum.user.User user) {
+        this.user = user;
+    }
 
     public void setId(UUID id) {
         this.id = id;
@@ -190,9 +217,9 @@ public class Listings {
         this.city = city;
     }
 
-    public void setPhotoUrl(String photoUrl) {
-        this.photoUrl = photoUrl;
-    }
+    public void setImages(List<FileEntity> images) {
+    this.images = images;
+}
 
     public void setContactPhone(String contactPhone) {
         this.contactPhone = contactPhone;
@@ -210,20 +237,8 @@ public class Listings {
         this.status = status;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public boolean getIsLost() {
-        return isLost;
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
     }
 
 }

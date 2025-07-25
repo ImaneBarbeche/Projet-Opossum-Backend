@@ -27,7 +27,6 @@ public class AuthService {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    // private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final EmailService emailService;
@@ -35,9 +34,6 @@ public class AuthService {
     @org.springframework.beans.factory.annotation.Value("${FRONTEND_URL}")
     private String frontendUrl;
 
-    /**
-     * Constructeur sans Lombok
-     */
     public AuthService(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
@@ -46,7 +42,6 @@ public class AuthService {
             EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        // this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
         this.emailService = emailService;
@@ -63,6 +58,10 @@ public class AuthService {
         }
 
         User user = optionalUser.get();
+        // Empêche la connexion si le compte est supprimé
+        if (user.getStatus() == com.opossum.common.enums.UserStatus.DELETED) {
+            throw new UnauthorizedException("Ce compte a été supprimé.");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Identifiants incorrects");
@@ -72,8 +71,6 @@ public class AuthService {
         if (!user.isEmailVerified()) {
             throw new UnauthorizedException("Veuillez vérifier votre adresse email avant de vous connecter.");
         }
-
-        System.out.println("Connexion réussie pour : " + user.getEmail());
 
         return buildAuthResponse(user);
     }
@@ -120,10 +117,6 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-
-        System.out.println(">> check email en BDD : " + request.getEmail());
-        System.out.println(">> user trouvé : " + userRepository.findByEmail(request.getEmail()));
-        System.out.println(">> existsByEmail : " + userRepository.existsByEmail(request.getEmail()));
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email déjà utilisé");

@@ -1,5 +1,4 @@
 package com.opossum.auth;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -13,12 +12,15 @@ public class EmailService {
     @Value("${MAIL_FROM:noreply@opossum.fr}")
     private String fromEmail;
 
+    @Value("${FRONTEND_URL:http://localhost:8080}")
+    private String frontendUrl;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
-    public void sendVerificationEmail(String toEmail, String token) {
-        String verificationUrl = "http://localhost:8080/api/v1/auth/verify?token=" + token;
+       public void sendVerificationEmail(String toEmail, String token) {
+        String verificationUrl = frontendUrl + "/api/v1/auth/verify?token=" + token;
         String subject = "Vérification de votre adresse email";
         String text = "Bonjour,\n\nMerci de cliquer sur ce lien pour vérifier votre compte :\n" + verificationUrl + "\n\nL'équipe Opossum.";
 
@@ -72,12 +74,32 @@ public class EmailService {
 
         mailSender.send(message);
     }
-    public void sendResetPasswordEmail(String toEmail, String token) {
-        String resetUrl = "http://192.168.1.7:8080/reset-password.html?token=" + token;
+
+       public void sendResetPasswordEmail(String toEmail, String token) {
+        String resetUrl = frontendUrl + "/reset-password.html?token=" + token;
         String subject = "Réinitialisation de votre mot de passe";
         String text = "Bonjour,\n\nPour réinitialiser votre mot de passe, cliquez sur ce lien :\n" + resetUrl +
             "\n\nSi le lien ne fonctionne pas, copiez ce code dans l'application :\n" + token +
             "\n\nCe lien et ce code sont valables 30 minutes.\n\nL'équipe Opossum.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+
+        mailSender.send(message);
+    }
+
+        /**
+     * Envoie un email à l'auteur lorsqu'une annonce est archivée/bloquée par l'admin
+     */
+    public void sendAnnouncementBlockedNotification(String toEmail, String firstName, String title, String reason, String moderationNotes) {
+        String subject = "Votre annonce a été archivée par l'équipe de modération";
+        String text = "Bonjour" + (firstName != null && !firstName.isBlank() ? " " + firstName : "") + ",\n\n" +
+                "Votre annonce \"" + title + "\" a été archivée par l'équipe de modération.\n" +
+                "Raison : " + reason + (moderationNotes != null && !moderationNotes.isBlank() ? "\nNotes de modération : " + moderationNotes : "") +
+                "\n\nSi vous pensez qu'il s'agit d'une erreur, contactez le support.\n\nL'équipe Opossum.";
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
