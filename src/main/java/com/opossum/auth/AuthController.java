@@ -26,6 +26,34 @@ public class AuthController {
     private final LogoutService logoutService;
 
     /**
+     * Route : GET /api/v1/auth
+     * ➤ Vérifie la session à partir du cookie (refreshToken)
+     * ➤ Retourne l'utilisateur et le statut d'authentification
+     */
+    @GetMapping("")
+    public ResponseEntity<?> checkSession(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseUtil.success(Map.of(
+                "authenticated", false,
+                "user", null
+            ));
+        }
+        try {
+            AuthResponse response = authService.refreshToken(refreshToken);
+            // Ici, on suppose que AuthResponse contient l'utilisateur (à adapter si besoin)
+            return ResponseUtil.success(Map.of(
+                "authenticated", true,
+                "user", response.getUserDTO() 
+            ));
+        } catch (Exception e) {
+            return ResponseUtil.success(Map.of(
+                "authenticated", false,
+                "user", null
+            ));
+        }
+    }
+
+    /**
      * Injection de dépendance par constructeur (manuellement). Pas de Lombok,
      * donc on écrit le constructeur à la main.
      */
@@ -59,7 +87,6 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        System.out.println(">>> Reçu : " + request.getEmail() + " / " + request.getPassword());
         try {
             AuthResponse response = authService.login(request);
             ResponseCookie cookie = ResponseCookie.from("refreshToken", response.getRefreshToken())

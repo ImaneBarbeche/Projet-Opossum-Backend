@@ -11,6 +11,7 @@ import com.opossum.listings.dto.CreateListingsRequest;
 import com.opossum.listings.dto.UpdateListingsRequest;
 import com.opossum.file.FileRepository;
 import com.opossum.file.FileEntity;
+import org.springframework.http.ResponseEntity;
 
 @Service
 public class ListingsService {
@@ -142,5 +143,37 @@ public class ListingsService {
 
     public List<Listings> getListingsByStatus(ListingStatus status) {
         return listingsRepository.findByStatus(status);
+    }
+
+    /**
+     * Recherche d'annonces pour affichage Google Maps (markers, distance, etc.)
+     */
+    public ResponseEntity<?> getAnnouncementsForMap(Double latitude, Double longitude, Integer radius, String type, String category, Integer page, Integer size, com.opossum.user.User currentUser) {
+        // TODO: Filtrer les annonces avec coordonnées GPS valides
+        // TODO: Appliquer le rayon (Haversine) si latitude/longitude fournis
+        // TODO: Filtrer par type/category
+        // TODO: Paginer les résultats
+        // TODO: Calculer la distance pour chaque annonce si position utilisateur
+        // TODO: Formater la réponse pour Google Maps markers
+        // TODO: Inclure meta (total, critères, performance)
+        // Squelette de réponse
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("data", new java.util.ArrayList<>()); // à remplir avec les annonces
+        Map<String, Object> meta = new java.util.HashMap<>();
+        meta.put("total", 0); // à calculer
+        meta.put("searchCriteria", Map.of(
+            "centerLat", latitude,
+            "centerLng", longitude,
+            "radiusKm", radius,
+            "type", type
+        ));
+        meta.put("performance", Map.of(
+            "queryTime", "0ms",
+            "resultsFiltered", "GPS coordinates only"
+        ));
+        response.put("meta", meta);
+        response.put("timestamp", java.time.Instant.now().toString());
+        return ResponseEntity.ok(response);
     }
 }

@@ -133,4 +133,11 @@ public class AuthResponse {
     public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
     }
+
+    /**
+     * Retourne un UserDTO avec les infos utilisateur (pour la session)
+     */
+    public UserDTO getUserDTO() {
+        return new UserDTO(id, email, firstName, lastName, role);
+    }
 }
