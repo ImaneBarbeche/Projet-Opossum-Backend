@@ -1,6 +1,7 @@
 package com.opossum.listings.dto;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import com.opossum.common.enums.ListingStatus;
 
@@ -20,8 +21,9 @@ public class ListingsDto {
     private Instant updatedAt;
     private Instant resolvedAt;
     private UUID userId;
+    private List<String> imageUrls;
 
-    public ListingsDto(UUID id, String title, String description, String type, String category, ListingStatus status, Double latitude, Double longitude, String address, String city, Instant createdAt, Instant updatedAt, Instant resolvedAt, UUID userId) {
+    public ListingsDto(UUID id, String title, String description, String type, String category, ListingStatus status, Double latitude, Double longitude, String address, String city, Instant createdAt, Instant updatedAt, Instant resolvedAt, UUID userId, List<String> imageUrls) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -36,10 +38,71 @@ public class ListingsDto {
         this.updatedAt = updatedAt;
         this.resolvedAt = resolvedAt;
         this.userId = userId;
+        this.imageUrls = imageUrls;
     }
 
     public UUID getId() {
         return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setStatus(ListingStatus status) {
+        this.status = status;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
 
     public String getTitle() {
@@ -92,5 +155,9 @@ public class ListingsDto {
 
     public UUID getUserId() {
         return userId;
+    }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
     }
 }

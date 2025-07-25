@@ -8,17 +8,36 @@ import org.springframework.http.ResponseEntity;
 import com.opossum.common.enums.UserStatus;
 import com.opossum.listings.ListingsRepository;
 import java.util.Map;
+import com.opossum.file.FileRepository;
+import com.opossum.file.FileEntity;
+import com.opossum.file.FileService;
 
 @Service
 public class AdminService {
+        
+        private final com.opossum.user.UserRepository userRepository;
+        private final ListingsRepository listingsRepository;
+    private final FileRepository fileRepository;
+    private final FileService fileService;
+        
+        /**
+         * AdminService constructor.
+         * 
+         * @param userRepository     User repository for accessing user data.
+         * @param listingsRepository Listings repository for accessing listing data.
+         * @param fileRepository     File repository for accessing file data.
+         */
+    public AdminService(com.opossum.user.UserRepository userRepository, ListingsRepository listingsRepository, FileRepository fileRepository, FileService fileService) {
+        this.userRepository = userRepository;
+        this.listingsRepository = listingsRepository;
+        this.fileRepository = fileRepository;
+        this.fileService = fileService;
+    }
 
-    private final com.opossum.user.UserRepository userRepository;
-    private final ListingsRepository listingsRepository;
-
-    /**
-     * Purge users and listings that have been soft deleted for over 1 year.
-     * Runs daily at 2:00 AM UTC.
-     */
+        /**
+         * Purge users and listings that have been soft deleted for over 1 year.
+         * Runs daily at 2:00 AM UTC.
+         */
     @Scheduled(cron = "0 0 2 * * ?")
     public void purgeOldDeletedEntities() {
         ZonedDateTime threshold = ZonedDateTime.now(ZoneOffset.UTC).minusYears(1);
@@ -47,18 +66,19 @@ public class AdminService {
             // logger.info("Hard deleted listing: {} at {}", listing.getId(),
             // ZonedDateTime.now(ZoneOffset.UTC));
         }
+
+        // Purge files (FileEntity) soft-deleted depuis plus d'un an
+        List<FileEntity> filesToDelete = fileRepository.findByIsDeletedAndCreatedAtBefore(true, threshold.toInstant());
+        for (FileEntity file : filesToDelete) {
+            // Suppression physique sur Cloudinary
+            if (file.getStoredName() != null) {
+                fileService.deleteFromCloudinary(file.getStoredName());
+            }
+            fileRepository.delete(file);
+            // logger.info("Hard deleted file: {} at {}", file.getId(), ZonedDateTime.now(ZoneOffset.UTC));
+        }
     }
 
-    /**
-     * AdminService constructor.
-     * 
-     * @param userRepository     User repository for accessing user data.
-     * @param listingsRepository Listings repository for accessing listing data.
-     */
-    public AdminService(com.opossum.user.UserRepository userRepository, ListingsRepository listingsRepository) {
-        this.userRepository = userRepository;
-        this.listingsRepository = listingsRepository;
-    }
 
     public ResponseEntity<?> getGlobalStats() {
         // Statistiques mockées pour l'exemple

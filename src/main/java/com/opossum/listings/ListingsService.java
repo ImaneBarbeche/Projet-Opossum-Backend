@@ -1,5 +1,4 @@
 package com.opossum.listings;
-
 import com.opossum.user.UserRepository;
 import com.opossum.common.enums.ListingType;
 import com.opossum.common.enums.ListingStatus;
@@ -10,6 +9,8 @@ import java.util.*;
 
 import com.opossum.listings.dto.CreateListingsRequest;
 import com.opossum.listings.dto.UpdateListingsRequest;
+import com.opossum.file.FileRepository;
+import com.opossum.file.FileEntity;
 
 @Service
 public class ListingsService {
@@ -19,9 +20,11 @@ public class ListingsService {
     }
 
     private final ListingsRepository listingsRepository;
+    private final FileRepository fileRepository;
 
-    public ListingsService(ListingsRepository listingsRepository, UserRepository userRepository) {
+    public ListingsService(ListingsRepository listingsRepository, UserRepository userRepository, FileRepository fileRepository) {
         this.listingsRepository = listingsRepository;
+        this.fileRepository = fileRepository;
     }
 
     @Transactional
@@ -58,6 +61,13 @@ public class ListingsService {
         listing.setUserId(userId);
         listing.setStatus(ListingStatus.ACTIVE);
         listing.setUpdatedAt(Instant.now());
+
+        // Association des images à l'annonce
+        if (createListingsRequest.getFileIds() != null && !createListingsRequest.getFileIds().isEmpty()) {
+            List<FileEntity> images = fileRepository.findAllById(createListingsRequest.getFileIds());
+            listing.setImages(images);
+        }
+
         return listingsRepository.save(listing);
     }
 
@@ -96,6 +106,19 @@ public class ListingsService {
             if (updateListingsRequest.getStatus() != null) {
                 existing.setStatus(updateListingsRequest.getStatus());
             }
+            // Gestion de la modification des images
+            if (updateListingsRequest.getFileIds() != null) {
+                List<FileEntity> oldImages = new ArrayList<>(existing.getImages());
+                List<FileEntity> newImages = fileRepository.findAllById(updateListingsRequest.getFileIds());
+                existing.setImages(newImages);
+                // Soft delete des images qui ne sont plus associées
+                for (FileEntity oldImg : oldImages) {
+                    if (newImages.stream().noneMatch(f -> f.getId().equals(oldImg.getId()))) {
+                        oldImg.setDeleted(true);
+                        fileRepository.save(oldImg);
+                    }
+                }
+            }
             existing.setUpdatedAt(Instant.now());
             return listingsRepository.save(existing);
         });
@@ -103,7 +126,14 @@ public class ListingsService {
 
     @Transactional
     public void deleteListing(UUID id) {
-        listingsRepository.deleteById(id);
+        listingsRepository.findById(id).ifPresent(listing -> {
+            // Soft delete de toutes les images associées
+            for (FileEntity img : listing.getImages()) {
+                img.setDeleted(true);
+                fileRepository.save(img);
+            }
+            listingsRepository.deleteById(id);
+        });
     }
 
     public List<Listings> searchListings(String title) {

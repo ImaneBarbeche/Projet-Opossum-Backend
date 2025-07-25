@@ -1,5 +1,4 @@
 package com.opossum.listings;
-
 import java.util.*;
 
 public class ListingsMapper {
@@ -11,7 +10,7 @@ public class ListingsMapper {
         map.put("category", l.getCategory());
         map.put("status", l.getStatus() != null ? l.getStatus().name() : null);
         map.put("createdAt", l.getCreatedAt());
-        map.put("thumbnailUrl", null); // à adapter si besoin
+        map.put("thumbnailUrl", null); 
         return map;
     }
 
@@ -46,6 +45,9 @@ public class ListingsMapper {
         userInfo.put("lastName", null);
         userInfo.put("avatar", null);
 
+        // Expose la liste des URLs d'images
+        List<String> imageUrls = l.getImages() != null ? l.getImages().stream().map(f -> f.getUrl()).toList() : List.of();
+
         Map<String, Object> data = new HashMap<>();
         data.put("id", l.getId() != null ? l.getId() : null);
         data.put("title", l.getTitle() != null ? l.getTitle() : null);
@@ -54,7 +56,7 @@ public class ListingsMapper {
         data.put("category", l.getCategory() != null ? l.getCategory() : null);
         data.put("status", l.getStatus() != null ? l.getStatus().name() : null);
         data.put("location", location);
-        data.put("photoUrl", null);
+        data.put("imageUrls", imageUrls);
         data.put("contactInfo", contactInfo);
         data.put("user", userInfo);
         data.put("createdAt", l.getCreatedAt() != null ? l.getCreatedAt() : null);
