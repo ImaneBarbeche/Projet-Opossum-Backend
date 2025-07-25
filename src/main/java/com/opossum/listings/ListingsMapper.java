@@ -10,7 +10,10 @@ public class ListingsMapper {
         map.put("category", l.getCategory());
         map.put("status", l.getStatus() != null ? l.getStatus().name() : null);
         map.put("createdAt", l.getCreatedAt());
-        map.put("thumbnailUrl", null); 
+        // Ajout photoUrl et thumbnailUrl
+        List<String> imageUrls = l.getImages() != null ? l.getImages().stream().map(f -> f.getUrl()).toList() : List.of();
+        map.put("photoUrl", !imageUrls.isEmpty() ? imageUrls.get(0) : null);
+        map.put("thumbnailUrl", !imageUrls.isEmpty() ? imageUrls.get(0) : null); // à adapter si miniature
         return map;
     }
 
@@ -57,6 +60,9 @@ public class ListingsMapper {
         data.put("status", l.getStatus() != null ? l.getStatus().name() : null);
         data.put("location", location);
         data.put("imageUrls", imageUrls);
+        // Ajout photoUrl et thumbnailUrl
+        data.put("photoUrl", !imageUrls.isEmpty() ? imageUrls.get(0) : null);
+        data.put("thumbnailUrl", !imageUrls.isEmpty() ? imageUrls.get(0) : null); // à adapter si miniature
         data.put("contactInfo", contactInfo);
         data.put("user", userInfo);
         data.put("createdAt", l.getCreatedAt() != null ? l.getCreatedAt() : null);

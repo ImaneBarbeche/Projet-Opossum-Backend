@@ -6,6 +6,9 @@ import java.util.UUID;
 import com.opossum.common.enums.ListingStatus;
 
 public class ListingsDto {
+    // Ajout pour accès direct à la première image
+    private String photoUrl;
+    private String thumbnailUrl;
 
     private UUID id;
     private String title;
@@ -39,6 +42,11 @@ public class ListingsDto {
         this.resolvedAt = resolvedAt;
         this.userId = userId;
         this.imageUrls = imageUrls;
+        // Initialisation des champs photoUrl et thumbnailUrl
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            this.photoUrl = imageUrls.get(0);
+            this.thumbnailUrl = imageUrls.get(0); // À adapter si tu as une vraie miniature
+        }
     }
 
     public UUID getId() {
@@ -159,5 +167,21 @@ public class ListingsDto {
 
     public List<String> getImageUrls() {
         return imageUrls;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 }
