@@ -76,7 +76,12 @@ public ResponseEntity<?> uploadFile(MultipartFile file, java.util.UUID uploadedB
         response.put("fileSize", entity.getFileSize());
         response.put("uploadedBy", entity.getUploadedBy());
         response.put("createdAt", entity.getCreatedAt());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        // Structure compatible frontend
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("success", true);
+        result.put("data", response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     } catch (Exception e) {
         e.printStackTrace(); // ou logger.error("Erreur upload Cloudinary", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l'upload Cloudinary");
