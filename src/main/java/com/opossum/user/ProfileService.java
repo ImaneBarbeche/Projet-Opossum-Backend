@@ -168,6 +168,7 @@ public class ProfileService {
                     });
             }
             user.setAvatar(request.getAvatar());
+            System.out.println("Nouvel avatar : " + user.getAvatar());
             changed = true;
         }
         if (changed) {
